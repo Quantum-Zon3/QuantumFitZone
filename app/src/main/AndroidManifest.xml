@@ -12,6 +12,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.QuantumFitZone">
         <activity
+            android:name=".RegistroUsuarioForm"
+            android:exported="false"
+            android:label="@string/title_activity_registro_usuario_form"
+            android:theme="@style/Theme.QuantumFitZone" />
+        <activity
+            android:name=".viewModel.RegistroUsuarios"
+            android:exported="false"
+            android:label="@string/title_activity_registro_usuarios"
+            android:theme="@style/Theme.QuantumFitZone" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"

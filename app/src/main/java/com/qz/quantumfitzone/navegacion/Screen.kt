@@ -1,0 +1,8 @@
+package com.qz.quantumfitzone.navegacion
+
+sealed class Screen(val route: String) {
+    object Welcome  : Screen("welcome")
+    object Registro : Screen("registro")
+    object Login    : Screen("login")
+
+}
