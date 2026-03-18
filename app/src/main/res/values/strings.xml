@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">QuantumFitZone</string>
+    <string name="title_activity_registro_usuarios">RegistroUsuarios</string>
+    <string name="title_activity_registro_usuario_form">RegistroUsuarioForm</string>
 </resources>
