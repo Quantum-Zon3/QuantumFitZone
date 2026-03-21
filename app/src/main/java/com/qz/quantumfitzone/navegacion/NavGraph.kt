@@ -5,6 +5,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.quantumfitzone.QuantumFitzoneScreen
 import com.qz.quantumfitzone.LoginForm
+import com.qz.quantumfitzone.ProfileScreen
 import com.qz.quantumfitzone.RegistroUsuarioForm
 
 @Composable
@@ -35,6 +36,12 @@ fun NavGraph() {
                 onLogin = { navController.navigate(Screen.Dashboard.route) },
                 onForgotPassword = { /* próximamente */ },
                 onRegister = { navController.navigate(Screen.Registro.route) }
+            )
+        }
+
+        composable(Screen.Profile.route){
+            ProfileScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
