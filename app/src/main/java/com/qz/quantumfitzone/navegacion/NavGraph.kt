@@ -2,6 +2,7 @@ package com.qz.quantumfitzone.navegacion
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.example.quantumfitzone.QuantumFitzoneScreen
 import com.qz.quantumfitzone.LoginForm
@@ -40,10 +41,15 @@ fun NavGraph() {
             )
         }
 
-        composable(Screen.Profile.route){
+        composable(Screen.Profile.route) {
             ProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onSignOut = { navController.navigate(Screen.Login.route)}
+                onSignOut      = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigate     = { /*proximamente*/}
             )
         }
     }
