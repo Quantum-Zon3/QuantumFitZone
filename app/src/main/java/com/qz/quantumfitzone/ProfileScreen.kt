@@ -46,6 +46,7 @@ private val RedSignOut   = Color(0xFFFF3B5C)
 fun ProfileScreen(
     onNavigateBack: () -> Unit = {},
     onSignOut: () -> Unit = {},
+    onNavigate: (BottomNavDestination) -> Unit = {},
     viewModel: ProfileViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -333,6 +334,8 @@ fun ProfileScreen(
 
         // ── Bottom Nav Bar ────────────────────────────────────────────────────
         BottomNavBar(
+            selected = BottomNavDestination.PROFILE,
+            onItemClick = onNavigate,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
@@ -443,87 +446,6 @@ private fun SettingsRow(
             tint = TextSecondary,
             modifier = Modifier.size(18.dp)
         )
-    }
-}
-
-// ── Bottom Navigation Bar ────────────────────────────────────────────────────
-
-private data class NavItem(
-    val label: String,
-    val icon: ImageVector,
-    val isSelected: Boolean = false
-)
-
-@Composable
-private fun BottomNavBar(modifier: Modifier = Modifier) {
-    val items = listOf(
-        NavItem("Home",     Icons.Default.Home),
-        NavItem("Routines", Icons.Default.FitnessCenter),
-        NavItem("History",  Icons.Default.History),
-        NavItem("Progress", Icons.Default.BarChart),
-        NavItem("Profile",  Icons.Default.Person, isSelected = true),
-        NavItem("Support",  Icons.Default.HeadsetMic)
-    )
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, BgDeep.copy(alpha = 0.95f)),
-                    startY = 0f,
-                    endY = 40f
-                )
-            )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFF0A1520).copy(alpha = 0.97f))
-                .navigationBarsPadding()
-                .padding(horizontal = 4.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            items.forEach { item ->
-                NavBarItem(item)
-            }
-        }
-    }
-}
-
-@Composable
-private fun NavBarItem(item: NavItem) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { /* próximamente */ }
-            .padding(horizontal = 8.dp, vertical = 6.dp)
-    ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = item.label,
-            tint = if (item.isSelected) CyanPrimary else TextSecondary,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(Modifier.height(3.dp))
-        Text(
-            text = item.label,
-            fontSize = 10.sp,
-            fontWeight = if (item.isSelected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (item.isSelected) CyanPrimary else TextSecondary,
-            letterSpacing = 0.3.sp
-        )
-        // Indicador activo
-        if (item.isSelected) {
-            Spacer(Modifier.height(3.dp))
-            Box(
-                modifier = Modifier
-                    .size(4.dp)
-                    .clip(CircleShape)
-                    .background(CyanPrimary)
-            )
-        }
     }
 }
 
