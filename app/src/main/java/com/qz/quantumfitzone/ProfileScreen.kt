@@ -10,6 +10,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -43,6 +45,7 @@ private val RedSignOut   = Color(0xFFFF3B5C)
 @Composable
 fun ProfileScreen(
     onNavigateBack: () -> Unit = {},
+    onSignOut: () -> Unit = {},
     viewModel: ProfileViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -82,7 +85,7 @@ fun ProfileScreen(
 
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .verticalScroll(scrollState)
         ) {
             // ── Top Bar ───────────────────────────────────────────────────────
@@ -94,7 +97,7 @@ fun ProfileScreen(
             ) {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         tint = CyanPrimary
                     )
@@ -297,7 +300,7 @@ fun ProfileScreen(
                     .padding(horizontal = 20.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(BgCard)
-                    .clickable { viewModel.onSignOut() }
+                    .clickable { onSignOut() }
                     .padding(horizontal = 20.dp, vertical = 18.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -309,7 +312,7 @@ fun ProfileScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ExitToApp,
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                         contentDescription = "Sign Out",
                         tint = RedSignOut,
                         modifier = Modifier.size(18.dp)
@@ -324,8 +327,14 @@ fun ProfileScreen(
                 )
             }
 
-            Spacer(Modifier.height(100.dp)) // Espacio para bottom nav bar
+            // Espacio para que el scroll no quede detrás de la bottom nav
+            Spacer(Modifier.height(72.dp))
         }
+
+        // ── Bottom Nav Bar ────────────────────────────────────────────────────
+        BottomNavBar(
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
@@ -434,6 +443,87 @@ private fun SettingsRow(
             tint = TextSecondary,
             modifier = Modifier.size(18.dp)
         )
+    }
+}
+
+// ── Bottom Navigation Bar ────────────────────────────────────────────────────
+
+private data class NavItem(
+    val label: String,
+    val icon: ImageVector,
+    val isSelected: Boolean = false
+)
+
+@Composable
+private fun BottomNavBar(modifier: Modifier = Modifier) {
+    val items = listOf(
+        NavItem("Home",     Icons.Default.Home),
+        NavItem("Routines", Icons.Default.FitnessCenter),
+        NavItem("History",  Icons.Default.History),
+        NavItem("Progress", Icons.Default.BarChart),
+        NavItem("Profile",  Icons.Default.Person, isSelected = true),
+        NavItem("Support",  Icons.Default.HeadsetMic)
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color.Transparent, BgDeep.copy(alpha = 0.95f)),
+                    startY = 0f,
+                    endY = 40f
+                )
+            )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF0A1520).copy(alpha = 0.97f))
+                .navigationBarsPadding()
+                .padding(horizontal = 4.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            items.forEach { item ->
+                NavBarItem(item)
+            }
+        }
+    }
+}
+
+@Composable
+private fun NavBarItem(item: NavItem) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { /* próximamente */ }
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+    ) {
+        Icon(
+            imageVector = item.icon,
+            contentDescription = item.label,
+            tint = if (item.isSelected) CyanPrimary else TextSecondary,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            text = item.label,
+            fontSize = 10.sp,
+            fontWeight = if (item.isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (item.isSelected) CyanPrimary else TextSecondary,
+            letterSpacing = 0.3.sp
+        )
+        // Indicador activo
+        if (item.isSelected) {
+            Spacer(Modifier.height(3.dp))
+            Box(
+                modifier = Modifier
+                    .size(4.dp)
+                    .clip(CircleShape)
+                    .background(CyanPrimary)
+            )
+        }
     }
 }
 

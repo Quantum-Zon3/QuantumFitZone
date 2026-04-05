@@ -14,7 +14,8 @@ fun NavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Welcome.route
+        startDestination = Screen.Profile.route
+
     ) {
         composable(Screen.Welcome.route) {
             QuantumFitzoneScreen(
@@ -41,7 +42,8 @@ fun NavGraph() {
 
         composable(Screen.Profile.route){
             ProfileScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onSignOut = { navController.navigate(Screen.Login.route)}
             )
         }
     }
