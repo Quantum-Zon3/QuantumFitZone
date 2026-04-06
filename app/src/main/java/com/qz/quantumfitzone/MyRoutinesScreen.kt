@@ -69,7 +69,9 @@ private val sampleRoutines = listOf(
 // ── Screen ────────────────────────────────────────────────────────────────────
 @Composable
 fun MyRoutinesScreen(
-    onNavigate: (BottomNavDestination) -> Unit = {})
+    onNavigate: (BottomNavDestination) -> Unit = {},
+    onEditRoutine: () -> Unit = {}
+)
 {
     Box(
         modifier = Modifier
@@ -127,9 +129,13 @@ fun MyRoutinesScreen(
 
             // ── Lista de rutinas ──────────────────────────────────────────────
             sampleRoutines.forEach { routine ->
-                RoutineCard(routine = routine)
+                RoutineCard(
+                    routine       = routine,
+                    onEditRoutine = onEditRoutine  // ← agregar esto
+                )
                 Spacer(Modifier.height(16.dp))
             }
+
 
             // Espacio para el FAB y bottom nav
             Spacer(Modifier.height(100.dp))
@@ -185,12 +191,16 @@ fun MyRoutinesScreen(
 
 // ── Routine Card ──────────────────────────────────────────────────────────────
 @Composable
-private fun RoutineCard(routine: Routine) {
+private fun RoutineCard(
+    routine: Routine,
+    onEditRoutine: () -> Unit = {}
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .height(160.dp)
+            .clickable { onEditRoutine() }
             .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.linearGradient(colors = routine.gradientColors)
