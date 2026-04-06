@@ -2,9 +2,11 @@ package com.qz.quantumfitzone.navegacion
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.example.quantumfitzone.QuantumFitzoneScreen
 import com.qz.quantumfitzone.LoginForm
+import com.qz.quantumfitzone.ProfileScreen
 import com.qz.quantumfitzone.RegistroUsuarioForm
 
 @Composable
@@ -13,7 +15,8 @@ fun NavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Welcome.route
+        startDestination = Screen.Profile.route
+
     ) {
         composable(Screen.Welcome.route) {
             QuantumFitzoneScreen(
@@ -35,6 +38,18 @@ fun NavGraph() {
                 onLogin = { navController.navigate(Screen.Dashboard.route) },
                 onForgotPassword = { /* próximamente */ },
                 onRegister = { navController.navigate(Screen.Registro.route) }
+            )
+        }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onSignOut      = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigate     = { /*proximamente*/}
             )
         }
     }
