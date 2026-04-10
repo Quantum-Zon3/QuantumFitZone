@@ -6,6 +6,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.example.quantumfitzone.QuantumFitzoneScreen
 import com.qz.quantumfitzone.BottomNavDestination
+import com.qz.quantumfitzone.EditRoutineScreen
 import com.qz.quantumfitzone.LoginForm
 import com.qz.quantumfitzone.MyRoutinesScreen
 import com.qz.quantumfitzone.ProfileScreen
@@ -60,6 +61,7 @@ fun NavGraph() {
                 }
             )
         }
+
         composable(Screen.MyRoutines.route) {
             MyRoutinesScreen(
                 onNavigate = { destination ->
@@ -68,7 +70,17 @@ fun NavGraph() {
                         BottomNavDestination.ROUTINES -> { /* ya estás aquí */ }
                         else -> { /* próximamente */ }
                     }
-                }
+                },
+                onEditRoutine = { navController.navigate(Screen.EditRoutine.route)}
+            )
+        }
+
+        composable(Screen.EditRoutine.route) {
+            EditRoutineScreen(
+                onNavigateBack = { navController.navigate(Screen.MyRoutines.route) },
+                onListo        = { navController.navigate(Screen.MyRoutines.route) {
+                    popUpTo(Screen.MyRoutines.route) { inclusive = true }
+                }},
             )
         }
     }
