@@ -93,6 +93,9 @@ fun NavGraph() {
                         BottomNavDestination.ROUTINES -> navController.navigate(Screen.MyRoutines.route)
                         BottomNavDestination.PROFILE  -> navController.navigate(Screen.Profile.route)
                         BottomNavDestination.DASHBOARD -> { /* ya estás aquí */ }
+                        BottomNavDestination.PROGRESS -> { /* próximamente */ }
+                        BottomNavDestination.HISTORY -> { /* próximamente */ }
+                        BottomNavDestination.SUPPORT -> { /* próximamente */ }
                         else -> { /* luego agregaremos más */ }
                     }
                 }

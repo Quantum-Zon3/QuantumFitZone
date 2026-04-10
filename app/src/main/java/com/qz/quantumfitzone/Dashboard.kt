@@ -71,7 +71,6 @@ fun StatCard(value: String, label: String, icon: ImageVector) {
 @Composable
 fun DashboardScreen(
     onNavigate: (BottomNavDestination) -> Unit = {},
-    onEditRoutine: () -> Unit = {}
 ) {
 
     val gradient = Brush.verticalGradient(
