@@ -59,6 +59,7 @@ fun NavGraph() {
                     when (destination) {
                         BottomNavDestination.ROUTINES  -> navController.navigate(Screen.MyRoutines.route)
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
+                        BottomNavDestination.SUPPORT   -> navController.navigate(Screen.SupportCenter.route)
                         BottomNavDestination.PROFILE -> { /* ya estás aquí */ }
                         else -> { /* próximamente */ }
                     }
@@ -72,6 +73,7 @@ fun NavGraph() {
                     when (destination) {
                         BottomNavDestination.PROFILE  -> navController.navigate(Screen.Profile.route)
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
+                        BottomNavDestination.SUPPORT   -> navController.navigate(Screen.SupportCenter.route)
                         BottomNavDestination.ROUTINES -> { /* ya estás aquí */ }
                         else -> { /* próximamente */ }
                     }
@@ -97,10 +99,12 @@ fun NavGraph() {
                         BottomNavDestination.DASHBOARD -> { /* ya estás aquí */ }
                         BottomNavDestination.PROGRESS -> { /* próximamente */ }
                         BottomNavDestination.HISTORY -> { /* próximamente */ }
-                        BottomNavDestination.SUPPORT -> { /* próximamente */ }
+                        BottomNavDestination.SUPPORT   -> navController.navigate(Screen.SupportCenter.route)
                         else -> { /* luego agregaremos más */ }
                     }
                 }
+            )
+        }
 
         composable(Screen.SupportCenter.route) {
             SupportScreen (
@@ -110,7 +114,7 @@ fun NavGraph() {
                         BottomNavDestination.ROUTINES -> navController.navigate(Screen.MyRoutines.route)
                         BottomNavDestination.PROFILE -> navController.navigate(Screen.Profile.route)
                         BottomNavDestination.SUPPORT -> { /*Estas aqui*/}
-                        BottomNavDestination.HOME -> navController.navigate(Screen.Dashboard.route)
+                        BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         else -> { /*Próximamente*/}
                     }
                 },

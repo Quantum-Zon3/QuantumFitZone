@@ -118,7 +118,7 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.width(10.dp))
 
                     Column {
-                        Text("Good Morning, Neo", color = Color.White)
+                        Text("Good Morning", color = Color.White)
                     }
                 }
 
@@ -187,4 +187,10 @@ fun DashboardScreen(
             modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
+
+}
+@Preview (showBackground = true, backgroundColor = 0xFF080E1A)
+@Composable
+fun DashboardScreenPreview() {
+    DashboardScreen()
 }
