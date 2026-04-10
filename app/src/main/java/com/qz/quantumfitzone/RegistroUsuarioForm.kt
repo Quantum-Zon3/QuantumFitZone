@@ -1,9 +1,5 @@
 package com.qz.quantumfitzone
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,16 +26,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.qz.quantumfitzone.clases.RegistroUsuario
-import com.qz.quantumfitzone.ui.theme.QuantumFitZoneTheme
-import com.qz.quantumfitzone.viewModel.RegistroViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
+import com.qz.quantumfitzone.viewModel.PersonaViewModel
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 
@@ -57,10 +50,11 @@ private val TextLabel     = Color(0xFFB0B3CC)
 
 @Composable
 fun RegistroUsuarioForm(
-    viewModel: RegistroViewModel = viewModel(),
-    onBack: () -> Unit = {}
+    viewModel: PersonaViewModel = viewModel(),
+    onBack: () -> Unit = {},
+    onLogin: () -> Unit = {}
 ) {
-    val state = viewModel.registro
+    val state = viewModel.personaEntity
 
     Box(
         modifier = Modifier
@@ -157,7 +151,36 @@ fun RegistroUsuarioForm(
             Spacer(modifier = Modifier.height(32.dp))
 
             // ── Botones ──────────────────────────────────────────────────
-            CreateAccountButton(onClick = viewModel::registrar)
+            Button(
+                onClick = {
+                    viewModel.registrar(onLogin)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues()
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(AccentPink, AccentPinkEnd)
+                            ),
+                            shape = RoundedCornerShape(50)
+                        )
+                ) {
+                    Text(
+                        text = "Create Account",
+                        color = TextPrimary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -184,6 +207,7 @@ fun RegistroUsuarioForm(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.clickable { }
                 )
+
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -374,40 +398,6 @@ private fun FitnessGoalDropdown() {
                     }
                 )
             }
-        }
-    }
-}
-
-// ─── Create Account Button ────────────────────────────────────────────────────
-
-@Composable
-private fun CreateAccountButton(onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(50),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-        contentPadding = PaddingValues()
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(AccentPink, AccentPinkEnd)
-                    ),
-                    shape = RoundedCornerShape(50)
-                )
-        ) {
-            Text(
-                text = "Create Account",
-                color = TextPrimary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
         }
     }
 }

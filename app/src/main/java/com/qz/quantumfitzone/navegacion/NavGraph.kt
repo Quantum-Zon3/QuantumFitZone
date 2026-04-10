@@ -12,6 +12,7 @@ import com.qz.quantumfitzone.MyRoutinesScreen
 import com.qz.quantumfitzone.ProfileScreen
 import com.qz.quantumfitzone.RegistroUsuarioForm
 import com.qz.quantumfitzone.DashboardScreen
+import com.qz.quantumfitzone.SupportScreen
 
 @Composable
 fun NavGraph() {
@@ -19,7 +20,7 @@ fun NavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Welcome.route
+        startDestination = Screen.SupportCenter.route
 
     ) {
         composable(Screen.Welcome.route) {
@@ -32,14 +33,15 @@ fun NavGraph() {
 
         composable(Screen.Registro.route) {
             RegistroUsuarioForm(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onLogin = { navController.navigate(Screen.Login.route) }
             )
         }
 
         composable(Screen.Login.route) {
             LoginForm(
                 onBack = { navController.popBackStack() },
-                onLogin = { navController.navigate(Screen.Dashboard.route) },
+                onLogin = { navController.navigate(Screen.Profile.route) },
                 onForgotPassword = { /* próximamente */ },
                 onRegister = { navController.navigate(Screen.Registro.route) }
             )
@@ -99,6 +101,19 @@ fun NavGraph() {
                         else -> { /* luego agregaremos más */ }
                     }
                 }
+
+        composable(Screen.SupportCenter.route) {
+            SupportScreen (
+                onBack = { navController.navigate(Screen.Dashboard.route)},
+                onNavigate = { destination ->
+                    when (destination) {
+                        BottomNavDestination.ROUTINES -> navController.navigate(Screen.MyRoutines.route)
+                        BottomNavDestination.PROFILE -> navController.navigate(Screen.Profile.route)
+                        BottomNavDestination.SUPPORT -> { /*Estas aqui*/}
+                        BottomNavDestination.HOME -> navController.navigate(Screen.Dashboard.route)
+                        else -> { /*Próximamente*/}
+                    }
+                },
             )
         }
     }
