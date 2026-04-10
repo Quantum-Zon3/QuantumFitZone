@@ -12,4 +12,6 @@ sealed class Screen(val route: String) {
     object MyRoutines : Screen("myRoutines")
 
     object EditRoutine : Screen("EditRoutine")
+
+    object SupportCenter : Screen("SupportCenter")
 }
