@@ -11,6 +11,7 @@ import com.qz.quantumfitzone.LoginForm
 import com.qz.quantumfitzone.MyRoutinesScreen
 import com.qz.quantumfitzone.ProfileScreen
 import com.qz.quantumfitzone.RegistroUsuarioForm
+import com.qz.quantumfitzone.SupportScreen
 
 @Composable
 fun NavGraph() {
@@ -18,7 +19,7 @@ fun NavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Welcome.route
+        startDestination = Screen.SupportCenter.route
 
     ) {
         composable(Screen.Welcome.route) {
@@ -82,6 +83,21 @@ fun NavGraph() {
                 onListo        = { navController.navigate(Screen.MyRoutines.route) {
                     popUpTo(Screen.MyRoutines.route) { inclusive = true }
                 }},
+            )
+        }
+
+        composable(Screen.SupportCenter.route) {
+            SupportScreen (
+                onBack = { navController.navigate(Screen.Dashboard.route)},
+                onNavigate = { destination ->
+                    when (destination) {
+                        BottomNavDestination.ROUTINES -> navController.navigate(Screen.MyRoutines.route)
+                        BottomNavDestination.PROFILE -> navController.navigate(Screen.Profile.route)
+                        BottomNavDestination.SUPPORT -> { /*Estas aqui*/}
+                        BottomNavDestination.HOME -> navController.navigate(Screen.Dashboard.route)
+                        else -> { /*Próximamente*/}
+                    }
+                },
             )
         }
     }
