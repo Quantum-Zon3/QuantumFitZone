@@ -30,14 +30,15 @@ fun NavGraph() {
 
         composable(Screen.Registro.route) {
             RegistroUsuarioForm(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onLogin = { navController.navigate(Screen.Login.route) }
             )
         }
 
         composable(Screen.Login.route) {
             LoginForm(
                 onBack = { navController.popBackStack() },
-                onLogin = { navController.navigate(Screen.Dashboard.route) },
+                onLogin = { navController.navigate(Screen.Profile.route) },
                 onForgotPassword = { /* próximamente */ },
                 onRegister = { navController.navigate(Screen.Registro.route) }
             )

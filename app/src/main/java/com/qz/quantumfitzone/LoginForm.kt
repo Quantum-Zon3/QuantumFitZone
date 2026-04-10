@@ -27,10 +27,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.qz.quantumfitzone.ui.theme.QuantumFitZoneTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.qz.quantumfitzone.viewModel.PersonaViewModel
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 
@@ -49,15 +49,14 @@ private val TextHint    = Color(0xFF3A5A7A)
 
 @Composable
 fun LoginForm(
+    viewModel: PersonaViewModel = viewModel(),
     onBack: () -> Unit = {},
     onLogin: () -> Unit = {},
     onForgotPassword: () -> Unit = {},
     onRegister: () -> Unit = {}
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val state = viewModel.personaEntity
     var passwordVisible by remember { mutableStateOf(false) }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -184,7 +183,7 @@ fun LoginForm(
                         modifier = Modifier.padding(bottom = 6.dp)
                     )
                     LoginTextField(
-                        value = email,
+                        value = state.correo,
                         placeholder = "neon@fitness.com",
                         keyboardType = KeyboardType.Email,
                         leadingIcon = {
@@ -195,7 +194,7 @@ fun LoginForm(
                                 modifier = Modifier.size(18.dp)
                             )
                         },
-                        onValueChange = { email = it }
+                        onValueChange = { viewModel.onCorreoChange(it)}
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
@@ -223,7 +222,7 @@ fun LoginForm(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     LoginTextField(
-                        value = password,
+                        value = state.password,
                         placeholder = "••••••••",
                         keyboardType = KeyboardType.Password,
                         visualTransformation = if (passwordVisible)
@@ -251,14 +250,16 @@ fun LoginForm(
                                 )
                             }
                         },
-                        onValueChange = { password = it }
+                        onValueChange = { viewModel.onPasswordChange(it) }
                     )
 
                     Spacer(modifier = Modifier.height(28.dp))
 
                     // ── Botón principal ──────────────────────────────────
                     Button(
-                        onClick = onLogin,
+                        onClick = {
+                            viewModel.login({ onLogin() })
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
