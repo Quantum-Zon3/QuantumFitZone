@@ -11,6 +11,7 @@ import com.qz.quantumfitzone.LoginForm
 import com.qz.quantumfitzone.MyRoutinesScreen
 import com.qz.quantumfitzone.ProfileScreen
 import com.qz.quantumfitzone.RegistroUsuarioForm
+import com.qz.quantumfitzone.DashboardScreen
 
 @Composable
 fun NavGraph() {
@@ -55,6 +56,7 @@ fun NavGraph() {
                 onNavigate = { destination ->
                     when (destination) {
                         BottomNavDestination.ROUTINES  -> navController.navigate(Screen.MyRoutines.route)
+                        BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         BottomNavDestination.PROFILE -> { /* ya estás aquí */ }
                         else -> { /* próximamente */ }
                     }
@@ -67,6 +69,7 @@ fun NavGraph() {
                 onNavigate = { destination ->
                     when (destination) {
                         BottomNavDestination.PROFILE  -> navController.navigate(Screen.Profile.route)
+                        BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         BottomNavDestination.ROUTINES -> { /* ya estás aquí */ }
                         else -> { /* próximamente */ }
                     }
@@ -81,6 +84,18 @@ fun NavGraph() {
                 onListo        = { navController.navigate(Screen.MyRoutines.route) {
                     popUpTo(Screen.MyRoutines.route) { inclusive = true }
                 }},
+            )
+        }
+        composable(Screen.Dashboard.route) {
+            DashboardScreen(
+                onNavigate = { destination ->
+                    when (destination) {
+                        BottomNavDestination.ROUTINES -> navController.navigate(Screen.MyRoutines.route)
+                        BottomNavDestination.PROFILE  -> navController.navigate(Screen.Profile.route)
+                        BottomNavDestination.DASHBOARD -> { /* ya estás aquí */ }
+                        else -> { /* luego agregaremos más */ }
+                    }
+                }
             )
         }
     }

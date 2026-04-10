@@ -26,7 +26,7 @@ private val TextSecondary  = Color(0xFF6B8FAB)
 
 // ── Destinos ──────────────────────────────────────────────────────────────────
 enum class BottomNavDestination {
-    HOME, ROUTINES, HISTORY, PROGRESS, PROFILE, SUPPORT
+    ROUTINES, HISTORY, PROGRESS, PROFILE, SUPPORT, DASHBOARD
 }
 
 private data class NavItem(
@@ -36,12 +36,12 @@ private data class NavItem(
 )
 
 private val navItems = listOf(
-    NavItem("Home",     Icons.Default.Home,          BottomNavDestination.HOME),
     NavItem("Routines", Icons.Default.FitnessCenter,  BottomNavDestination.ROUTINES),
     NavItem("History",  Icons.Default.History,        BottomNavDestination.HISTORY),
     NavItem("Progress", Icons.Default.BarChart,       BottomNavDestination.PROGRESS),
     NavItem("Profile",  Icons.Default.Person,         BottomNavDestination.PROFILE),
-    NavItem("Support",  Icons.Default.HeadsetMic,     BottomNavDestination.SUPPORT)
+    NavItem("Support",  Icons.Default.HeadsetMic,     BottomNavDestination.SUPPORT),
+    NavItem("Dashboard", Icons.Default.Dashboard, BottomNavDestination.DASHBOARD)
 )
 
 // ── Composable ────────────────────────────────────────────────────────────────
