@@ -15,6 +15,8 @@ sealed class Screen(val route: String) {
 
     object SupportCenter : Screen("SupportCenter")
 
+    object DashboardAdmin : Screen("DashboardAdmin")
+
     object WorkoutHistory : Screen("WorkoutHistory")
 
     object Progress : Screen("Progress")

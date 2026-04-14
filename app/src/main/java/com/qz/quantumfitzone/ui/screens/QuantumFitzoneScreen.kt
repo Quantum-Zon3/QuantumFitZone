@@ -1,5 +1,6 @@
 package com.example.quantumfitzone
 
+import android.content.Context
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,10 +21,13 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.qz.quantumfitzone.viewModel.PersonaViewModel
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 
@@ -40,10 +44,20 @@ private val TextSecondary   = Color(0xFF8A8FAD)
 
 @Composable
 fun QuantumFitzoneScreen(
+    context: Context = LocalContext.current,
+    viewModel: PersonaViewModel = viewModel(),
     onRegistro: () -> Unit = {},
     onLogin: () -> Unit = {},
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onDashboard: () -> Unit = {}
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.cargarDatos(
+            context = context,
+            { onDashboard()}
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()

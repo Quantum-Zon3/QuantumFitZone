@@ -34,7 +34,8 @@ fun NavGraph() {
             QuantumFitzoneScreen(
                 onRegistro = { navController.navigate(Screen.Registro.route) },
                 onLogin = { navController.navigate(Screen.Login.route) },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onDashboard = { navController.navigate(Screen.Dashboard.route) }
             )
         }
 
