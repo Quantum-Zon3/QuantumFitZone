@@ -26,7 +26,7 @@ private val TextSecondary  = Color(0xFF6B8FAB)
 
 // ── Destinos ──────────────────────────────────────────────────────────────────
 enum class BottomNavDestination {
-    DASHBOARD, ROUTINES, HISTORY, PROGRESS, PROFILE, SUPPORT
+    DASHBOARD, ROUTINES, HISTORY, PROGRESS, PROFILE, SUPPORT, HOME, USERS, MACHINES
 }
 
 private data class NavItem(
@@ -42,6 +42,12 @@ private val navItems = listOf(
     NavItem("Progress", Icons.Default.BarChart,       BottomNavDestination.PROGRESS),
     NavItem("Profile",  Icons.Default.Person,         BottomNavDestination.PROFILE),
     NavItem("Support",  Icons.Default.HeadsetMic,     BottomNavDestination.SUPPORT)
+)
+
+private val navItemsAdmin = listOf(
+    NavItem("Home", Icons.Default.Home, BottomNavDestination.HOME),
+    NavItem("Users", Icons.Default.Person, BottomNavDestination.USERS),
+    NavItem("Machines", Icons.Default.FitnessCenter, BottomNavDestination.MACHINES)
 )
 
 // ── Composable ────────────────────────────────────────────────────────────────
@@ -81,6 +87,41 @@ fun BottomNavBar(
     }
 }
 
+@Composable
+fun BottomNavBarAdmin(
+    selected: BottomNavDestination,
+    onItemClick: (BottomNavDestination) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color.Transparent, BgDeep.copy(alpha = 0.95f)),
+                    startY = 0f,
+                    endY   = 40f
+                )
+            )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF0A1520).copy(alpha = 0.97f))
+                .navigationBarsPadding()
+                .padding(horizontal = 4.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            navItemsAdmin.forEach { item ->
+                NavBarItem(
+                    item       = item,
+                    isSelected = item.destination == selected,
+                    onClick    = { onItemClick(item.destination) }
+                )
+            }
+        }
+    }
+}
 @Composable
 private fun NavBarItem(
     item: NavItem,
