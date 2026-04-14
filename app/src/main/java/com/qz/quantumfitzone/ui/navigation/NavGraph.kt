@@ -1,18 +1,18 @@
-package com.qz.quantumfitzone.navegacion
+package com.qz.quantumfitzone.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.example.quantumfitzone.QuantumFitzoneScreen
-import com.qz.quantumfitzone.BottomNavDestination
-import com.qz.quantumfitzone.EditRoutineScreen
-import com.qz.quantumfitzone.LoginForm
-import com.qz.quantumfitzone.MyRoutinesScreen
-import com.qz.quantumfitzone.ProfileScreen
-import com.qz.quantumfitzone.RegistroUsuarioForm
-import com.qz.quantumfitzone.DashboardScreen
+import com.qz.quantumfitzone.ui.screens.BottomNavDestination
+import com.qz.quantumfitzone.ui.screens.EditRoutineScreen
+import com.qz.quantumfitzone.ui.screens.LoginForm
+import com.qz.quantumfitzone.ui.screens.MyRoutinesScreen
+import com.qz.quantumfitzone.ui.screens.ProfileScreen
+import com.qz.quantumfitzone.ui.screens.RegistroUsuarioForm
+import com.qz.quantumfitzone.ui.screens.DashboardScreen
 import com.qz.quantumfitzone.SupportScreen
+import com.qz.quantumfitzone.ui.components.Screen
 
 @Composable
 fun NavGraph() {

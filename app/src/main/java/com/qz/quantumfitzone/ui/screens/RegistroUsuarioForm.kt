@@ -1,4 +1,4 @@
-package com.qz.quantumfitzone
+package com.qz.quantumfitzone.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
+import com.qz.quantumfitzone.R
 import com.qz.quantumfitzone.viewModel.PersonaViewModel
 
 // ─── Colors ──────────────────────────────────────────────────────────────────

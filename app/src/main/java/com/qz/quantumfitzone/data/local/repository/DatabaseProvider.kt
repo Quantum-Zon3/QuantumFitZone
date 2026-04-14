@@ -1,4 +1,4 @@
-package com.qz.quantumfitzone.data.repository
+package com.qz.quantumfitzone.data.local.repository
 
 import android.content.Context
 import androidx.room.Room

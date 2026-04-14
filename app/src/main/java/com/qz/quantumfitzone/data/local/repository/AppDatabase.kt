@@ -1,11 +1,11 @@
-package com.qz.quantumfitzone.data.repository
+package com.qz.quantumfitzone.data.local.repository
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.qz.quantumfitzone.data.dao.PersonaDao
-import com.qz.quantumfitzone.data.dao.MaquinaDao
-import com.qz.quantumfitzone.data.dao.RutinaDao
-import com.qz.quantumfitzone.data.dao.EjercicioDao
+import com.qz.quantumfitzone.data.local.dao.PersonaDao
+import com.qz.quantumfitzone.data.local.dao.MaquinaDao
+import com.qz.quantumfitzone.data.local.dao.RutinaDao
+import com.qz.quantumfitzone.data.local.dao.EjercicioDao
 import com.qz.quantumfitzone.data.model.PersonaEntity
 import com.qz.quantumfitzone.data.model.MaquinaEntity
 import com.qz.quantumfitzone.data.model.RutinaEntity
