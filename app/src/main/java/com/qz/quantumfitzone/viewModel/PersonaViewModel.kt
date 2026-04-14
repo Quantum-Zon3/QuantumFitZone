@@ -1,6 +1,7 @@
 package com.qz.quantumfitzone.viewModel
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -116,14 +117,14 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
             Estatura: ${personaEntity.estatura}
         """.trimIndent()
         )
-        Onclik
+        Onclik()
     }
 
 
     // ----------------------------
     // LÓGICA DE Login
     // ----------------------------
-    fun login(Onclik: () -> Unit) {
+    fun login(Onclik: () -> Unit, context: Context) {
         if (
             personaEntity.correo.isBlank() ||
             personaEntity.password.isBlank()
@@ -143,6 +144,7 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
 
                 if (personaEncontrada != null) {
                     Log.d("PERSONAS", "Se encontró: $personaEncontrada")
+                    guardarDatos(context, personaEntity.correo, personaEntity.password)
                     Onclik()
                 } else {
                     val error = personaEntity.copy(
@@ -153,5 +155,25 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
             }
         }
 
+    }
+
+    fun guardarDatos(context: Context, usuario: String, pass: String) {
+        println("Guardando datos en SharedPreferences: $usuario, $pass")
+        val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
+        val editor = preferences.edit()
+        editor.putString("user", usuario)
+        editor.putString("pass", pass)
+        editor.apply()
+    }
+
+    fun cargarDatos(context: Context, Onclik: () -> Unit) {
+        val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
+        val usuario = preferences.getString("user", "")
+        val pass = preferences.getString("pass", "")
+        if (!usuario.isNullOrEmpty() && !pass.isNullOrEmpty()) {
+            Onclik()
+        } else {
+            return
+        }
     }
 }

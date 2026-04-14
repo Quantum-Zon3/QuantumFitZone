@@ -1,5 +1,6 @@
 package com.qz.quantumfitzone.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +23,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -49,6 +51,7 @@ private val TextHint    = Color(0xFF3A5A7A)
 
 @Composable
 fun LoginForm(
+    context: Context = LocalContext.current,
     viewModel: PersonaViewModel = viewModel(),
     onBack: () -> Unit = {},
     onLogin: () -> Unit = {},
@@ -258,7 +261,7 @@ fun LoginForm(
                     // ── Botón principal ──────────────────────────────────
                     Button(
                         onClick = {
-                            viewModel.login({ onLogin() })
+                            viewModel.login({ onLogin()} ,context)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
