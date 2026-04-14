@@ -18,7 +18,6 @@ import com.qz.quantumfitzone.ui.screens.ProgressScreen
 import com.qz.quantumfitzone.ui.screens.RegistroUsuarioForm
 import com.qz.quantumfitzone.ui.screens.DashboardScreen
 import com.qz.quantumfitzone.SupportScreen
-import com.qz.quantumfitzone.ui.components.Screen
 import com.qz.quantumfitzone.ui.screens.DashboardScreenAdmin
 import com.qz.quantumfitzone.ui.screens.WorkoutHistoryScreen
 
@@ -72,6 +71,7 @@ fun NavGraph() {
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
                         BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
                         BottomNavDestination.PROFILE -> { }
+                        else -> {}
                     }
                 }
             )
@@ -87,6 +87,7 @@ fun NavGraph() {
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
                         BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
                         BottomNavDestination.ROUTINES -> { }
+                        else -> {}
                     }
                 },
                 onEditRoutine = { navController.navigate(Screen.EditRoutine.route) }
@@ -114,6 +115,7 @@ fun NavGraph() {
                         BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
                         BottomNavDestination.SUPPORT -> navController.navigate(Screen.SupportCenter.route)
+                        else -> {}
                     }
                 }
             )
@@ -130,6 +132,7 @@ fun NavGraph() {
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
                         BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
+                        else -> {}
                     }
                 }
             )
@@ -144,7 +147,8 @@ fun NavGraph() {
                         BottomNavDestination.SUPPORT -> navController.navigate(Screen.SupportCenter.route)
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
-                        BottomNavDestination.HISTORY -> { }
+                        BottomNavDestination.HISTORY -> {navController.navigate(Screen.WorkoutHistory.route) }
+                        else -> {}
                     }
                 }
             )
@@ -160,7 +164,8 @@ fun NavGraph() {
                         BottomNavDestination.SUPPORT -> navController.navigate(Screen.SupportCenter.route)
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
-                        BottomNavDestination.PROGRESS -> { }
+                        BottomNavDestination.PROGRESS -> {navController.navigate(Screen.Progress.route) }
+                        else -> {}
                     }
                 }
             )
