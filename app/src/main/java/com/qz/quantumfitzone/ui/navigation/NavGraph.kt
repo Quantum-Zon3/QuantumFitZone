@@ -1,4 +1,5 @@
 package com.qz.quantumfitzone.ui.navigation
+import androidx.collection.emptyLongSet
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
@@ -15,6 +16,9 @@ import com.qz.quantumfitzone.ui.screens.MyRoutinesScreen
 import com.qz.quantumfitzone.ui.screens.ProfileScreen
 import com.qz.quantumfitzone.ui.screens.ProgressScreen
 import com.qz.quantumfitzone.ui.screens.RegistroUsuarioForm
+import com.qz.quantumfitzone.ui.screens.DashboardScreen
+import com.qz.quantumfitzone.SupportScreen
+import com.qz.quantumfitzone.ui.screens.DashboardScreenAdmin
 import com.qz.quantumfitzone.ui.screens.WorkoutHistoryScreen
 
 @Composable
@@ -23,7 +27,8 @@ fun NavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.SupportCenter.route
+        startDestination = Screen.Welcome.route
+
     ) {
         composable(Screen.Welcome.route) {
             QuantumFitzoneScreen(
@@ -65,6 +70,7 @@ fun NavGraph() {
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
                         BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
                         BottomNavDestination.PROFILE -> { }
+                        else -> {}
                     }
                 }
             )
@@ -80,6 +86,7 @@ fun NavGraph() {
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
                         BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
                         BottomNavDestination.ROUTINES -> { }
+                        else -> {}
                     }
                 },
                 onEditRoutine = { navController.navigate(Screen.EditRoutine.route) }
@@ -107,6 +114,7 @@ fun NavGraph() {
                         BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
                         BottomNavDestination.SUPPORT -> navController.navigate(Screen.SupportCenter.route)
+                        else -> {}
                     }
                 }
             )
@@ -123,6 +131,7 @@ fun NavGraph() {
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
                         BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
+                        else -> {}
                     }
                 }
             )
@@ -137,7 +146,8 @@ fun NavGraph() {
                         BottomNavDestination.SUPPORT -> navController.navigate(Screen.SupportCenter.route)
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
-                        BottomNavDestination.HISTORY -> { }
+                        BottomNavDestination.HISTORY -> {navController.navigate(Screen.WorkoutHistory.route) }
+                        else -> {}
                     }
                 }
             )
@@ -153,9 +163,23 @@ fun NavGraph() {
                         BottomNavDestination.SUPPORT -> navController.navigate(Screen.SupportCenter.route)
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
-                        BottomNavDestination.PROGRESS -> { }
+                        BottomNavDestination.PROGRESS -> {navController.navigate(Screen.Progress.route) }
+                        else -> {}
                     }
                 }
+            )
+        }
+
+        composable(Screen.DashboardAdmin.route) {
+            DashboardScreenAdmin (
+                onNavigate =  { destination ->
+                    when (destination) {
+                        BottomNavDestination.HOME -> navController.navigate(Screen.DashboardAdmin.route)
+                        BottomNavDestination.USERS -> {/*Proximamente*/}
+                        BottomNavDestination.MACHINES -> {/*Proximamente*/}
+                        else -> {/*Proximamente*/}
+                    }
+                },
             )
         }
     }
