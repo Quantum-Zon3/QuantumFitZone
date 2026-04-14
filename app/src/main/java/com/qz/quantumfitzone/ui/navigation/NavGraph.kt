@@ -1,4 +1,5 @@
 package com.qz.quantumfitzone.ui.navigation
+import androidx.collection.emptyLongSet
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -13,6 +14,7 @@ import com.qz.quantumfitzone.ui.screens.RegistroUsuarioForm
 import com.qz.quantumfitzone.ui.screens.DashboardScreen
 import com.qz.quantumfitzone.SupportScreen
 import com.qz.quantumfitzone.ui.components.Screen
+import com.qz.quantumfitzone.ui.screens.DashboardScreenAdmin
 
 @Composable
 fun NavGraph() {
@@ -20,7 +22,7 @@ fun NavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.SupportCenter.route
+        startDestination = Screen.Welcome.route
 
     ) {
         composable(Screen.Welcome.route) {
@@ -116,6 +118,19 @@ fun NavGraph() {
                         BottomNavDestination.SUPPORT -> { /*Estas aqui*/}
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         else -> { /*Próximamente*/}
+                    }
+                },
+            )
+        }
+
+        composable(Screen.DashboardAdmin.route) {
+            DashboardScreenAdmin (
+                onNavigate =  { destination ->
+                    when (destination) {
+                        BottomNavDestination.HOME -> navController.navigate(Screen.DashboardAdmin.route)
+                        BottomNavDestination.USERS -> {/*Proximamente*/}
+                        BottomNavDestination.MACHINES -> {/*Proximamente*/}
+                        else -> {/*Proximamente*/}
                     }
                 },
             )
