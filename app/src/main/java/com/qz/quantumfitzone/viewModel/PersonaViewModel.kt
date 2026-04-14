@@ -8,9 +8,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.qz.quantumfitzone.data.model.PersonaEntity
-import com.qz.quantumfitzone.data.repository.DatabaseProvider
+import com.qz.quantumfitzone.data.local.repository.DatabaseProvider
 import kotlinx.coroutines.launch
-import kotlin.collections.forEach
 
 class PersonaViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = DatabaseProvider

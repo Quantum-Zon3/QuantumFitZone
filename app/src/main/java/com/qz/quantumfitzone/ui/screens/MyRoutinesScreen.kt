@@ -1,4 +1,4 @@
-package com.qz.quantumfitzone
+package com.qz.quantumfitzone.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,7 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.qz.quantumfitzone.navegacion.Screen
 
 // ── Colores ───────────────────────────────────────────────────────────────────
 private val BgDeep        = Color(0xFF080E1A)

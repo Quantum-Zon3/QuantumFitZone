@@ -1,4 +1,4 @@
-package com.qz.quantumfitzone.data.dao
+package com.qz.quantumfitzone.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Delete

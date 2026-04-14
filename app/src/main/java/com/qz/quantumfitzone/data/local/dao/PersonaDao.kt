@@ -1,4 +1,4 @@
-package com.qz.quantumfitzone.data.dao
+package com.qz.quantumfitzone.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.qz.quantumfitzone.data.model.PersonaEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PersonaDao {
@@ -16,7 +17,7 @@ interface PersonaDao {
 
     // Leer todos (observables en tiempo real)
     @Query("SELECT * FROM personas")
-    fun obtenerTodas(): kotlinx.coroutines.flow.Flow<List<PersonaEntity>>
+    fun obtenerTodas(): Flow<List<PersonaEntity>>
 
     // Leer todos (no observables)
     @Query("SELECT * FROM personas")

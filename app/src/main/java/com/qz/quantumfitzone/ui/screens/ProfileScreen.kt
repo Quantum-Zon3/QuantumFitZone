@@ -1,4 +1,4 @@
-package com.qz.quantumfitzone
+package com.qz.quantumfitzone.ui.screens
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background

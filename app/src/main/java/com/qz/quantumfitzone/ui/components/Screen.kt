@@ -1,4 +1,4 @@
-package com.qz.quantumfitzone.navegacion
+package com.qz.quantumfitzone.ui.components
 
 sealed class Screen(val route: String) {
     object Welcome  : Screen("welcome")
