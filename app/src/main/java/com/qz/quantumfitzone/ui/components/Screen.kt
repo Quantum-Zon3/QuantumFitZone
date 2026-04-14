@@ -21,4 +21,5 @@ sealed class Screen(val route: String) {
 
     object Progress : Screen("Progress")
 
+    object MachinesAdmin : Screen("MachinesAdmin")
 }

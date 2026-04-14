@@ -20,6 +20,7 @@ import com.qz.quantumfitzone.ui.screens.DashboardScreen
 import com.qz.quantumfitzone.SupportScreen
 import com.qz.quantumfitzone.ui.screens.DashboardScreenAdmin
 import com.qz.quantumfitzone.ui.screens.WorkoutHistoryScreen
+import com.qz.quantumfitzone.ui.screens.AdminMachinesScreen
 
 @Composable
 fun NavGraph() {
@@ -27,7 +28,7 @@ fun NavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Welcome.route
+        startDestination = Screen.DashboardAdmin.route
 
     ) {
         composable(Screen.Welcome.route) {
@@ -177,10 +178,24 @@ fun NavGraph() {
                     when (destination) {
                         BottomNavDestination.HOME -> navController.navigate(Screen.DashboardAdmin.route)
                         BottomNavDestination.USERS -> {/*Proximamente*/}
-                        BottomNavDestination.MACHINES -> {/*Proximamente*/}
+                        BottomNavDestination.MACHINES -> { navController.navigate(Screen.MachinesAdmin.route) }
                         else -> {/*Proximamente*/}
                     }
-                },
+                }
+            )
+        }
+
+        composable(Screen.MachinesAdmin.route) {
+            AdminMachinesScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigate = { destination ->
+                    when (destination) {
+                        BottomNavDestination.HOME -> navController.navigate(Screen.DashboardAdmin.route)
+                        BottomNavDestination.USERS -> {/*Proximamente*/ }
+                        BottomNavDestination.MACHINES -> { navController.navigate(Screen.MachinesAdmin.route) }
+                        else -> {/*Proximamente*/}
+                    }
+                }
             )
         }
     }
