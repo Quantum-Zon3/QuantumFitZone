@@ -308,4 +308,3 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         insertar(personaAdmin)
     }
      */
-}
