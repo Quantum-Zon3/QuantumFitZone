@@ -62,9 +62,10 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         return dao.obtenerTodos()
     }
 
-    fun obtenerPorCorreo(correo: String) {
+    fun obtenerPorCorreo(correo: String, onResult: (PersonaEntity?) -> Unit) {
         viewModelScope.launch {
-            dao.obtenerPorCorreo(correo)
+            val usuario = dao.obtenerPorCorreo(correo)
+            onResult(usuario)
         }
     }
 
@@ -87,6 +88,114 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     // SECCION: FORMULARIO DE REGISTRO Y LOGIN
+    var personaActual by mutableStateOf(PersonaEntity())
+    var searchQuery by mutableStateOf("")
+        private set
+
+    var editorState by mutableStateOf<PersonaEditorState?>(null)
+        private set
+
+    var personaToDelete by mutableStateOf<PersonaEntity?>(null)
+        private set
+
+    fun updateSearchQuery(value: String) {
+        searchQuery = value
+    }
+
+    fun filteredPersonas(personas: List<PersonaEntity>): List<PersonaEntity> {
+        val query = searchQuery.trim().lowercase()
+        if (query.isEmpty()) return personas
+
+        return personas.filter { persona ->
+            persona.nombre.lowercase().contains(query) ||
+                persona.correo.lowercase().contains(query) ||
+                persona.rol.lowercase().contains(query)
+        }
+    }
+
+    fun openCreateDialog() {
+        editorState = PersonaEditorState.creating()
+    }
+
+    fun openEditDialog(persona: PersonaEntity) {
+        editorState = PersonaEditorState.editing(persona)
+    }
+
+    fun dismissEditorDialog() {
+        editorState = null
+    }
+
+    fun requestDelete(persona: PersonaEntity) {
+        personaToDelete = persona
+    }
+
+    fun dismissDeleteDialog() {
+        personaToDelete = null
+    }
+
+    fun updateEditorNombre(value: String) {
+        editorState = editorState?.copy(nombre = value, errorMessage = null)
+    }
+
+    fun updateEditorCorreo(value: String) {
+        editorState = editorState?.let { current ->
+            if (current.isEditMode) current else current.copy(correo = value, errorMessage = null)
+        }
+    }
+
+    fun updateEditorPassword(value: String) {
+        editorState = editorState?.copy(password = value, errorMessage = null)
+    }
+
+    fun updateEditorRol(value: String) {
+        editorState = editorState?.copy(rol = value, errorMessage = null)
+    }
+
+    fun updateEditorPeso(value: String) {
+        editorState = editorState?.copy(peso = value, errorMessage = null)
+    }
+
+    fun updateEditorEstatura(value: String) {
+        editorState = editorState?.copy(estatura = value, errorMessage = null)
+    }
+
+    fun updateEditorEstado(value: Boolean) {
+        editorState = editorState?.copy(estado = value, errorMessage = null)
+    }
+
+    fun saveEditor(): String? {
+        val currentEditor = editorState ?: return "No hay un formulario activo."
+        val validationError = currentEditor.validate()
+        if (validationError != null) {
+            editorState = currentEditor.copy(errorMessage = validationError)
+            return validationError
+        }
+
+        val persona = currentEditor.toPersonaEntity()
+        if (currentEditor.isEditMode) {
+            actualizar(persona)
+        } else {
+            insertar(persona)
+        }
+        editorState = null
+        return null
+    }
+
+    fun toggleStatus(persona: PersonaEntity) {
+        actualizar(persona.copy(estado = !persona.estado))
+    }
+
+    fun confirmDelete() {
+        val persona = personaToDelete ?: return
+        eliminar(persona)
+        personaToDelete = null
+    }
+
+
+    var personaEntity by mutableStateOf(PersonaEntity())
+        private set
+
+    // FUNCIONES DE CAMBIO DE CAMPOS
 
     fun onNombreChange(valor: String) {
         personaEntity = personaEntity.copy(nombre = valor)
@@ -297,6 +406,19 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
                 estatura = estatura,
                 password = password,
                 imc = peso / (estatura * estatura)
+}
+    /*
+    fun admin() {
+        var personaAdmin by mutableStateOf(PersonaEntity())
+        personaAdmin = personaAdmin.copy(
+            nombre = "Carlitos",
+            rol = "admin",
+            correo = "carlitos@fitness.com",
+            estado = true,
+            peso = 70f,
+            estatura = 1.70f,
+            imc = 70f/1.70f,
+            password = "Soy123"
             )
 
             dao.actualizar(personaActualizada)
@@ -398,5 +520,32 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
     private fun limpiarSesion(context: Context) {
         val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
         preferences.edit().clear().apply()
+    }
+     */
+    fun logout(context: Context, onclik: () -> Unit) {
+        val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
+        val editor = preferences.edit()
+        editor.remove("user")
+        editor.remove("pass")
+        editor.apply()
+        onclik()
+    }
+
+    fun usuarioActual(context: Context, onclik: () -> Unit) {
+        val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
+        val usuario = preferences.getString("user", "")
+        val pass = preferences.getString("pass", "")
+
+        if (!usuario.isNullOrEmpty() && !pass.isNullOrEmpty()) {
+            obtenerPorCorreo(usuario) { persona ->
+                if (persona != null) {
+                    personaActual = persona
+                } else {
+                    onclik()
+                }
+            }
+        } else {
+            onclik()
+        }
     }
 }

@@ -19,7 +19,19 @@ sealed class Screen(val route: String) {
 
     object WorkoutHistory : Screen("WorkoutHistory")
 
-    object Progress : Screen("Progress")
+    object Progress : Screen("Progress/{exerciseId}") {
+        fun createRoute(exerciseId: Int) = "Progress/$exerciseId"
+    }
+
+    object RoutineHistoryDetail : Screen("RoutineHistoryDetail/{historyId}") {
+        fun createRoute(historyId: Int) = "RoutineHistoryDetail/$historyId"
+    }
+
+    object ExerciseHistoryDetail : Screen("ExerciseHistoryDetail/{exerciseId}") {
+        fun createRoute(exerciseId: Int) = "ExerciseHistoryDetail/$exerciseId"
+    }
 
     object MachinesAdmin : Screen("MachinesAdmin")
+
+    object UsersAdmin : Screen("UsersAdmin")
 }
