@@ -58,7 +58,7 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         return personaDao.obtenerTodos()
     }
 
-    fun obtenerPorCorreo(correo: String) {
+    fun obtenerPorCorreo(correo: String, onResult: (PersonaEntity?) -> Unit) {
         viewModelScope.launch {
             personaDao.obtenerPorCorreo(correo)
         }
@@ -331,65 +331,31 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
-
-    fun onNavigateToAccount() {}
-
-    fun onNavigateToPrivacy() {}
-
-    fun onNavigateToNotifications() {}
-
-    fun onNavigateToConnectDevices() {}
-
-    // SECCION: CALCULOS DE PERFIL
-
-    private fun calcularNivel(workouts: Int): Int {
-        return (workouts / 4) + 1
+     */
+    fun logout(context: Context, onclik: () -> Unit) {
+        val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
+        val editor = preferences.edit()
+        editor.remove("user")
+        editor.remove("pass")
+        editor.apply()
+        onclik()
     }
 
-    private fun calcularRango(workouts: Int, streak: Int): String {
-        return when {
-            workouts >= 30 || streak >= 21 -> "Elite"
-            workouts >= 15 || streak >= 10 -> "Advanced"
-            workouts >= 5 || streak >= 5 -> "Active"
-            workouts >= 1 -> "Rookie"
-            else -> "Beginner"
-        }
-    }
+    fun usuarioActual(context: Context, onclik: () -> Unit) {
+        val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
+        val usuario = preferences.getString("user", "")
+        val pass = preferences.getString("pass", "")
 
-    private fun calcularRacha(sesiones: List<HistorialEntrenamientoEntity>): Int {
-        val fechas = sesiones
-            .asSequence()
-            .filter { it.completado }
-            .mapNotNull { parseDate(it.fecha) }
-            .distinct()
-            .sortedDescending()
-            .toList()
-
-        if (fechas.isEmpty()) return 0
-
-        val hoy = LocalDate.now()
-        val ultimaFecha = fechas.first()
-        if (ultimaFecha != hoy && ultimaFecha != hoy.minusDays(1)) return 0
-
-        var streak = 1
-        var referencia = ultimaFecha
-
-        for (i in 1 until fechas.size) {
-            val actual = fechas[i]
-            if (actual == referencia.minusDays(1)) {
-                streak++
-                referencia = actual
-            } else if (actual != referencia) {
-                break
+        if (!usuario.isNullOrEmpty() && !pass.isNullOrEmpty()) {
+            obtenerPorCorreo(usuario) { persona ->
+                if (persona != null) {
+                    personaActual = persona
+                } else {
+                    onclik()
+                }
             }
+        } else {
+            onclik()
         }
-
-        return streak
-    }
-
-    private fun parseDate(value: String): LocalDate? {
-        return runCatching {
-            LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE)
-        }.getOrNull()
     }
 }
