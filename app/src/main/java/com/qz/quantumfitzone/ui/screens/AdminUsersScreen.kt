@@ -1,5 +1,6 @@
 package com.qz.quantumfitzone.ui.screens
 
+import android.provider.ContactsContract
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -57,8 +58,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.qz.quantumfitzone.clases.PersonaEditorState
 import com.qz.quantumfitzone.data.model.PersonaEntity
-import com.qz.quantumfitzone.viewModel.PersonaEditorState
 import com.qz.quantumfitzone.viewModel.PersonaViewModel
 
 private val UsersBgDeep = Color(0xFF07131A)
@@ -165,13 +166,7 @@ fun AdminUsersScreen(
                 state = currentEditor,
                 onDismiss = personaViewModel::dismissEditorDialog,
                 onSave = personaViewModel::saveEditor,
-                onNombreChange = personaViewModel::updateEditorNombre,
-                onCorreoChange = personaViewModel::updateEditorCorreo,
-                onPasswordChange = personaViewModel::updateEditorPassword,
-                onRolChange = personaViewModel::updateEditorRol,
-                onPesoChange = personaViewModel::updateEditorPeso,
-                onEstaturaChange = personaViewModel::updateEditorEstatura,
-                onEstadoChange = personaViewModel::updateEditorEstado
+                personaViewModel = personaViewModel
             )
         }
 
@@ -452,13 +447,7 @@ private fun PersonaEditorDialog(
     state: PersonaEditorState,
     onDismiss: () -> Unit,
     onSave: () -> String?,
-    onNombreChange: (String) -> Unit,
-    onCorreoChange: (String) -> Unit,
-    onPasswordChange: (String) -> Unit,
-    onRolChange: (String) -> Unit,
-    onPesoChange: (String) -> Unit,
-    onEstaturaChange: (String) -> Unit,
-    onEstadoChange: (Boolean) -> Unit
+    personaViewModel: PersonaViewModel
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -474,33 +463,33 @@ private fun PersonaEditorDialog(
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 PersonaTextField(
                     value = state.nombre,
-                    onValueChange = onNombreChange,
+                    onValueChange = personaViewModel::updateEditorNombre,
                     label = "Nombre"
                 )
                 PersonaTextField(
                     value = state.correo,
-                    onValueChange = onCorreoChange,
+                    onValueChange = personaViewModel::updateEditorCorreo,
                     label = "Correo",
                     enabled = !state.isEditMode
                 )
                 PersonaTextField(
                     value = state.password,
-                    onValueChange = onPasswordChange,
+                    onValueChange = personaViewModel::updateEditorPassword,
                     label = "Password"
                 )
                 PersonaTextField(
                     value = state.rol,
-                    onValueChange = onRolChange,
+                    onValueChange = personaViewModel::updateEditorRol,
                     label = "Rol"
                 )
                 PersonaTextField(
                     value = state.peso,
-                    onValueChange = onPesoChange,
+                    onValueChange = personaViewModel::updateEditorPeso,
                     label = "Peso"
                 )
                 PersonaTextField(
                     value = state.estatura,
-                    onValueChange = onEstaturaChange,
+                    onValueChange = personaViewModel::updateEditorEstatura,
                     label = "Estatura"
                 )
                 Row(
@@ -523,7 +512,7 @@ private fun PersonaEditorDialog(
                     }
                     Switch(
                         checked = state.estado,
-                        onCheckedChange = onEstadoChange
+                        onCheckedChange = personaViewModel::updateEditorEstado
                     )
                 }
                 if (state.isEditMode) {
