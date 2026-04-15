@@ -1,5 +1,4 @@
 package com.qz.quantumfitzone.ui.navigation
-import androidx.collection.emptyLongSet
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
@@ -8,6 +7,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.quantumfitzone.QuantumFitzoneScreen
 import com.qz.quantumfitzone.SupportScreen
 import com.qz.quantumfitzone.ui.components.Screen
+import com.qz.quantumfitzone.ui.screens.AdminUsersScreen
 import com.qz.quantumfitzone.ui.screens.BottomNavDestination
 import com.qz.quantumfitzone.ui.screens.DashboardScreen
 import com.qz.quantumfitzone.ui.screens.EditRoutineScreen
@@ -16,8 +16,6 @@ import com.qz.quantumfitzone.ui.screens.MyRoutinesScreen
 import com.qz.quantumfitzone.ui.screens.ProfileScreen
 import com.qz.quantumfitzone.ui.screens.ProgressScreen
 import com.qz.quantumfitzone.ui.screens.RegistroUsuarioForm
-import com.qz.quantumfitzone.ui.screens.DashboardScreen
-import com.qz.quantumfitzone.SupportScreen
 import com.qz.quantumfitzone.ui.screens.DashboardScreenAdmin
 import com.qz.quantumfitzone.ui.screens.WorkoutHistoryScreen
 import com.qz.quantumfitzone.ui.screens.AdminMachinesScreen
@@ -178,7 +176,7 @@ fun NavGraph() {
                 onNavigate =  { destination ->
                     when (destination) {
                         BottomNavDestination.HOME -> navController.navigate(Screen.DashboardAdmin.route)
-                        BottomNavDestination.USERS -> {/*Proximamente*/}
+                        BottomNavDestination.USERS -> { navController.navigate(Screen.UsersAdmin.route) }
                         BottomNavDestination.MACHINES -> { navController.navigate(Screen.MachinesAdmin.route) }
                         else -> {/*Proximamente*/}
                     }
@@ -192,9 +190,23 @@ fun NavGraph() {
                 onNavigate = { destination ->
                     when (destination) {
                         BottomNavDestination.HOME -> navController.navigate(Screen.DashboardAdmin.route)
-                        BottomNavDestination.USERS -> {/*Proximamente*/ }
+                        BottomNavDestination.USERS -> { navController.navigate(Screen.UsersAdmin.route) }
                         BottomNavDestination.MACHINES -> { navController.navigate(Screen.MachinesAdmin.route) }
                         else -> {/*Proximamente*/}
+                    }
+                }
+            )
+        }
+
+        composable(Screen.UsersAdmin.route) {
+            AdminUsersScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigate = { destination ->
+                    when (destination) {
+                        BottomNavDestination.HOME -> navController.navigate(Screen.DashboardAdmin.route)
+                        BottomNavDestination.USERS -> { navController.navigate(Screen.UsersAdmin.route) }
+                        BottomNavDestination.MACHINES -> { navController.navigate(Screen.MachinesAdmin.route) }
+                        else -> {}
                     }
                 }
             )
