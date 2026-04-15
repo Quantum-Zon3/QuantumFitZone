@@ -8,6 +8,7 @@ data class HistorialEntrenamientoEntity(
     @PrimaryKey(autoGenerate = true)
     val id_historial: Int = 0,
     val correo_usuario: String,
+    val id_rutina: Int? = null,
     val fecha: String,
     val titulo: String,
     val duracion_minutos: Int,

@@ -23,6 +23,12 @@ interface EjercicioDao {
     @Query("SELECT * FROM ejercicios WHERE id_rutina = :idRutina")
     fun obtenerPorRutina(idRutina: Int): Flow<List<EjercicioEntity>>
 
+    @Query("SELECT * FROM ejercicios WHERE id_rutina = :idRutina AND fecha = :fecha")
+    fun obtenerPorRutinaYFecha(idRutina: Int, fecha: String): Flow<List<EjercicioEntity>>
+
+    @Query("SELECT * FROM ejercicios WHERE id_maquina = :idMaquina AND fecha IS NOT NULL ORDER BY fecha ASC, id_ejercicio ASC")
+    fun obtenerProgresoPorMaquina(idMaquina: Int): Flow<List<EjercicioEntity>>
+
     @Update
     suspend fun actualizar(ejercicio: EjercicioEntity)
 
