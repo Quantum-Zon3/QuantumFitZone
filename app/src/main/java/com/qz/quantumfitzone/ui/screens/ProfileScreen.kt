@@ -55,7 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.qz.quantumfitzone.viewModel.UserProfileViewModel
+import com.qz.quantumfitzone.viewModel.PersonaViewModel
 
 private val BgDeep = Color(0xFF080E1A)
 private val BgCard = Color(0xFF0D1726)
@@ -73,7 +73,7 @@ fun ProfileScreen(
     onNavigateBack: () -> Unit = {},
     onSignOut: () -> Unit = {},
     onNavigate: (BottomNavDestination) -> Unit = {},
-    viewModel: UserProfileViewModel = viewModel()
+    viewModel: PersonaViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()

@@ -28,20 +28,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.qz.quantumfitzone.viewModel.ExerciseHistoryDetailUiState
-import com.qz.quantumfitzone.viewModel.ExerciseHistoryDetailViewModel
+import com.qz.quantumfitzone.ui.state.ExerciseHistoryDetailUiState
+import com.qz.quantumfitzone.viewModel.EjercicioViewModel
 
 @Composable
 fun ExerciseHistoryDetailScreen(
     exerciseId: Int,
     onNavigateBack: () -> Unit = {},
     onOpenProgress: (Int) -> Unit = {},
-    viewModel: ExerciseHistoryDetailViewModel = viewModel()
+    viewModel: EjercicioViewModel = viewModel()
 ) {
-    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+    val uiState = viewModel.detalleUiState.collectAsStateWithLifecycle().value
 
     LaunchedEffect(exerciseId) {
-        viewModel.load(exerciseId)
+        viewModel.loadDetalle(exerciseId)
     }
 
     Box(
