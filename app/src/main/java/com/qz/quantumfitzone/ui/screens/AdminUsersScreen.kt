@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -94,7 +95,7 @@ fun AdminUsersScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 110.dp)
+                .padding(bottom = 132.dp)
         ) {
             UsersTopBar(onNavigateBack = onNavigateBack)
             UsersSearchBar(
@@ -145,7 +146,8 @@ fun AdminUsersScreen(
             contentColor = UsersBgDeep,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 94.dp)
+                .navigationBarsPadding()
+                .padding(end = 20.dp, bottom = 112.dp)
                 .size(62.dp)
         ) {
             Icon(
