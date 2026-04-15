@@ -39,9 +39,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.qz.quantumfitzone.viewModel.RoutineHistoryDetailUiState
-import com.qz.quantumfitzone.viewModel.RoutineHistoryDetailViewModel
-import com.qz.quantumfitzone.viewModel.RoutineHistoryExerciseItem
+import com.qz.quantumfitzone.ui.state.RoutineHistoryDetailUiState
+import com.qz.quantumfitzone.ui.state.RoutineHistoryExerciseItem
+import com.qz.quantumfitzone.viewModel.HistorialEntrenamientoViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -61,12 +61,12 @@ fun RoutineHistoryDetailScreen(
     historyId: Int,
     onNavigateBack: () -> Unit = {},
     onOpenExercise: (Int) -> Unit = {},
-    viewModel: RoutineHistoryDetailViewModel = viewModel()
+    viewModel: HistorialEntrenamientoViewModel = viewModel()
 ) {
-    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+    val uiState = viewModel.rutinaDetalleUiState.collectAsStateWithLifecycle().value
 
     LaunchedEffect(historyId) {
-        viewModel.load(historyId)
+        viewModel.loadRutinaDetalle(historyId)
     }
 
     Box(

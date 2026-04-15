@@ -1,4 +1,4 @@
-package com.qz.quantumfitzone.viewModel
+package com.qz.quantumfitzone.ui.state
 
 data class RoutineHistoryExerciseItem(
     val exerciseId: Int,

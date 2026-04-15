@@ -59,17 +59,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qz.quantumfitzone.viewModel.PersonaViewModel
-// ── Colores del tema ──────────────────────────────────────────────────────────
-private val BgDeep       = Color(0xFF080E1A)
-private val BgCard       = Color(0xFF0D1726)
-private val BgCardAlt    = Color(0xFF0F1C2E)
-private val CyanPrimary  = Color(0xFF00D4FF)
-private val CyanDim      = Color(0xFF0A8FAA)
-private val CyanGlow     = Color(0x3300D4FF)
-private val GoldElite    = Color(0xFFFFD700)
-private val TextPrimary  = Color(0xFFE8F4FF)
-private val TextSecondary= Color(0xFF6B8FAB)
-import com.qz.quantumfitzone.viewModel.UserProfileViewModel
 
 private val BgDeep = Color(0xFF080E1A)
 private val BgCard = Color(0xFF0D1726)

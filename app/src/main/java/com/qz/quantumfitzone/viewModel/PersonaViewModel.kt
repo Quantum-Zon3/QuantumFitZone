@@ -2,7 +2,6 @@ package com.qz.quantumfitzone.viewModel
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,48 +9,27 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.qz.quantumfitzone.clases.PersonaEditorState
 import com.qz.quantumfitzone.data.local.repository.DatabaseProvider
+import com.qz.quantumfitzone.data.model.HistorialEntrenamientoEntity
 import com.qz.quantumfitzone.data.model.PersonaEntity
+import com.qz.quantumfitzone.ui.state.UserProfileUiState
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class PersonaViewModel(application: Application) : AndroidViewModel(application) {
-    private val dao = DatabaseProvider
-        .getDatabase(application)
-        .personaDao()
-    val listaPersonas = dao.obtenerTodas()
+    private val database = DatabaseProvider.getDatabase(application)
+    private val personaDao = database.personaDao()
+    private val historialDao = database.historialEntrenamientoDao()
 
-    fun obtenerTodas() {
-        viewModelScope.launch {
-            dao.obtenerTodas()
-        }
-    }
+    val listaPersonas = personaDao.obtenerTodas()
 
-    suspend fun obtenerTodos(): List<PersonaEntity> {
-        return dao.obtenerTodos()
-    }
+    private val _uiState = MutableStateFlow(UserProfileUiState())
+    val uiState: StateFlow<UserProfileUiState> = _uiState.asStateFlow()
 
-    fun obtenerPorCorreo(correo: String, onResult: (PersonaEntity?) -> Unit) {
-        viewModelScope.launch {
-            val usuario = dao.obtenerPorCorreo(correo)
-            onResult(usuario)
-        }
-    }
-    fun insertar(persona: PersonaEntity) {
-        viewModelScope.launch {
-            dao.insertar(persona)
-        }
-    }
-    fun actualizar(persona: PersonaEntity) {
-        viewModelScope.launch {
-            dao.actualizar(persona)
-        }
-    }
-    fun eliminar(persona: PersonaEntity) {
-        viewModelScope.launch {
-            dao.eliminar(persona)
-        }
-    }
-
-    var personaActual by mutableStateOf(PersonaEntity())
     var searchQuery by mutableStateOf("")
         private set
 
@@ -60,6 +38,51 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
 
     var personaToDelete by mutableStateOf<PersonaEntity?>(null)
         private set
+
+    var personaEntity by mutableStateOf(PersonaEntity())
+        private set
+
+    init {
+        cargarPerfilUsuarioActivo()
+    }
+
+    // SECCION: CRUD DE PERSONAS
+
+    fun obtenerTodas() {
+        viewModelScope.launch {
+            personaDao.obtenerTodas()
+        }
+    }
+
+    suspend fun obtenerTodos(): List<PersonaEntity> {
+        return personaDao.obtenerTodos()
+    }
+
+    fun obtenerPorCorreo(correo: String, onResult: (PersonaEntity?) -> Unit) {
+        viewModelScope.launch {
+            personaDao.obtenerPorCorreo(correo)
+        }
+    }
+
+    fun insertar(persona: PersonaEntity) {
+        viewModelScope.launch {
+            personaDao.insertar(persona)
+        }
+    }
+
+    fun actualizar(persona: PersonaEntity) {
+        viewModelScope.launch {
+            personaDao.actualizar(persona)
+        }
+    }
+
+    fun eliminar(persona: PersonaEntity) {
+        viewModelScope.launch {
+            personaDao.eliminar(persona)
+        }
+    }
+
+    // SECCION: ESTADO Y FILTROS DE ADMINISTRACION
 
     fun updateSearchQuery(value: String) {
         searchQuery = value
@@ -154,14 +177,10 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         personaToDelete = null
     }
 
-
-    var personaEntity by mutableStateOf(PersonaEntity())
-        private set
-
-    // FUNCIONES DE CAMBIO DE CAMPOS
+    // SECCION: FORMULARIO DE REGISTRO Y LOGIN
 
     fun onNombreChange(valor: String) {
-        personaEntity = personaEntity. copy(nombre = valor)
+        personaEntity = personaEntity.copy(nombre = valor)
     }
 
     fun onCorreoChange(valor: String) {
@@ -180,62 +199,18 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         personaEntity = personaEntity.copy(estatura = valor)
     }
 
-    fun calcularImc(peso: Float, estatura: Float){
-        personaEntity = personaEntity.copy(imc = peso/estatura)
-    }
-
     fun onRolChange(valor: String) {
         personaEntity = personaEntity.copy(rol = valor)
     }
 
-
-    // ----------------------------
-    // LÓGICA DE REGISTRO
-    // ----------------------------
-     fun registrar(Onclik: () -> Unit) {
-
-        if (
-            personaEntity.nombre.isBlank() ||
-            personaEntity.correo.isBlank() ||
-            personaEntity.password.isBlank()
-        ){
-            personaEntity = personaEntity.copy(
-                resultado = "Por favor complete todos los campos y seleccione un país."
-            )
-            return
-        }
-
-        if (
-            personaEntity.peso.isNaN() ||
-            personaEntity.estatura.isNaN()
-        ){
-            personaEntity = personaEntity.copy(
-                resultado = "Por favor ingrese dígitos numéricos en los campos correspondientes"
-            )
-            return
-        }
-        calcularImc(personaEntity.peso, personaEntity.estatura)
-
-        insertar(personaEntity)
-        personaEntity = personaEntity.copy(
-            resultado = """
-            DATOS REGISTRADOS:
-            Nombre: ${personaEntity.nombre}
-            Correo: ${personaEntity.correo}
-            Contraseña: ${personaEntity.password}
-            Peso: ${personaEntity.peso}
-            Estatura: ${personaEntity.estatura}
-        """.trimIndent()
-        )
-        Onclik()
+    fun calcularImc(peso: Float, estatura: Float) {
+        if (estatura <= 0f) return
+        personaEntity = personaEntity.copy(imc = peso / (estatura * estatura))
     }
 
-
-    // ----------------------------
-    // LÓGICA DE Login
-    // ----------------------------
-    fun login(OnclikDashboardUsuario: () -> Unit, OnclikDashboardAdmin: () -> Unit , context: Context) {
+    fun registrar(onClick: () -> Unit) {
         if (
+            personaEntity.nombre.isBlank() ||
             personaEntity.correo.isBlank() ||
             personaEntity.password.isBlank()
         ) {
@@ -244,70 +219,117 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
             )
             return
         }
-        viewModelScope.launch {
-            dao.obtenerTodas().collect { listaPersonas ->
 
-                val personaEncontrada = listaPersonas.find {
-                    it.correo == personaEntity.correo &&
-                            it.password == personaEntity.password
-                }
-
-                if (personaEncontrada != null) {
-                    Log.d("PERSONAS", "Se encontró: $personaEncontrada")
-                    if (personaEncontrada.rol ==  "usuario") {
-                        guardarDatos(context, personaEntity.correo, personaEntity.password)
-                        OnclikDashboardUsuario()
-                    }
-                    else if (personaEncontrada.rol == "admin") {
-                        guardarDatos(context, personaEntity.correo, personaEntity.password)
-                        OnclikDashboardAdmin()
-                    }
-                } else {
-                    val error = personaEntity.copy(
-                        resultado = "Correo electrónico o contraseña incorrectos."
-                    )
-                    Log.d("PERSONAS", error.resultado)
-                }
-            }
+        if (personaEntity.peso.isNaN() || personaEntity.estatura.isNaN()) {
+            personaEntity = personaEntity.copy(
+                resultado = "Por favor ingrese digitos numericos en los campos correspondientes."
+            )
+            return
         }
 
+        calcularImc(personaEntity.peso, personaEntity.estatura)
+        insertar(personaEntity)
+        personaEntity = personaEntity.copy(
+            resultado = """
+            DATOS REGISTRADOS:
+            Nombre: ${personaEntity.nombre}
+            Correo: ${personaEntity.correo}
+            Contrasena: ${personaEntity.password}
+            Peso: ${personaEntity.peso}
+            Estatura: ${personaEntity.estatura}
+        """.trimIndent()
+        )
+        onClick()
+    }
+
+    fun login(
+        onClickDashboardUsuario: () -> Unit,
+        onClickDashboardAdmin: () -> Unit,
+        context: Context
+    ) {
+        if (personaEntity.correo.isBlank() || personaEntity.password.isBlank()) {
+            personaEntity = personaEntity.copy(
+                resultado = "Por favor complete todos los campos."
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            val personaEncontrada = personaDao.obtenerTodos().find {
+                it.correo == personaEntity.correo && it.password == personaEntity.password
+            }
+
+            if (personaEncontrada == null) {
+                personaEntity = personaEntity.copy(
+                    resultado = "Correo electronico o contrasena incorrectos."
+                )
+                return@launch
+            }
+
+            guardarDatos(context, personaEncontrada.correo, personaEncontrada.password)
+            cargarPerfilUsuarioActivo()
+
+            if (personaEncontrada.rol == "admin") {
+                onClickDashboardAdmin()
+            } else {
+                onClickDashboardUsuario()
+            }
+        }
     }
 
     fun guardarDatos(context: Context, usuario: String, pass: String) {
-        println("Guardando datos en SharedPreferences: $usuario, $pass")
         val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
-        val editor = preferences.edit()
-        editor.putString("user", usuario)
-        editor.putString("pass", pass)
-        editor.apply()
+        preferences.edit()
+            .putString("user", usuario)
+            .putString("pass", pass)
+            .apply()
     }
 
-    fun cargarDatos(context: Context, Onclik: () -> Unit) {
+    fun cargarDatos(context: Context, onClick: () -> Unit) {
         val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
         val usuario = preferences.getString("user", "")
         val pass = preferences.getString("pass", "")
         if (!usuario.isNullOrEmpty() && !pass.isNullOrEmpty()) {
-            Onclik()
-        } else {
-            return
+            cargarPerfilUsuarioActivo()
+            onClick()
         }
     }
-}
-    /*
-    fun admin() {
-        var personaAdmin by mutableStateOf(PersonaEntity())
-        personaAdmin = personaAdmin.copy(
-            nombre = "Carlitos",
-            rol = "admin",
-            correo = "carlitos@fitness.com",
-            estado = true,
-            peso = 70f,
-            estatura = 1.70f,
-            imc = 70f/1.70f,
-            password = "Soy123"
+
+    // SECCION: PERFIL DEL USUARIO ACTIVO
+
+    fun cargarPerfilUsuarioActivo() {
+        val preferences = getApplication<Application>()
+            .getSharedPreferences("credenciales", Context.MODE_PRIVATE)
+        val correoUsuario = preferences.getString("user", "").orEmpty()
+
+        if (correoUsuario.isBlank()) {
+            _uiState.value = UserProfileUiState(
+                userName = "Usuario",
+                email = "",
+                role = "usuario",
+                isLoading = false
             )
-        println("PersonaAdmin: $personaAdmin")
-        insertar(personaAdmin)
+            return
+        }
+
+        viewModelScope.launch {
+            historialDao.obtenerPorUsuario(correoUsuario).collectLatest { sesiones ->
+                val persona = personaDao.obtenerPorCorreo(correoUsuario)
+                val workouts = sesiones.count { it.completado }
+                val streak = calcularRacha(sesiones)
+
+                _uiState.value = UserProfileUiState(
+                    userName = persona?.nombre?.ifBlank { "Usuario" } ?: "Usuario",
+                    email = persona?.correo ?: correoUsuario,
+                    role = persona?.rol ?: "usuario",
+                    level = calcularNivel(workouts),
+                    workouts = workouts,
+                    streakDays = streak,
+                    rank = calcularRango(workouts, streak),
+                    isLoading = false
+                )
+            }
+        }
     }
      */
     fun logout(context: Context, onclik: () -> Unit) {
