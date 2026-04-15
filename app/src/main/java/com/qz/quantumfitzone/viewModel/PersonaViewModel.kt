@@ -28,9 +28,10 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         return dao.obtenerTodos()
     }
 
-    fun obtenerPorCorreo(correo: String) {
+    fun obtenerPorCorreo(correo: String, onResult: (PersonaEntity?) -> Unit) {
         viewModelScope.launch {
-            dao.obtenerPorCorreo(correo)
+            val usuario = dao.obtenerPorCorreo(correo)
+            onResult(usuario)
         }
     }
     fun insertar(persona: PersonaEntity) {
@@ -49,7 +50,7 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-
+    var personaActual by mutableStateOf(PersonaEntity())
     var personaEntity by mutableStateOf(PersonaEntity())
         private set
 
@@ -204,4 +205,30 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         insertar(personaAdmin)
     }
      */
+    fun logout(context: Context, onclik: () -> Unit) {
+        val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
+        val editor = preferences.edit()
+        editor.remove("user")
+        editor.remove("pass")
+        editor.apply()
+        onclik()
+    }
+
+    fun usuarioActual(context: Context, onclik: () -> Unit) {
+        val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
+        val usuario = preferences.getString("user", "")
+        val pass = preferences.getString("pass", "")
+
+        if (!usuario.isNullOrEmpty() && !pass.isNullOrEmpty()) {
+            obtenerPorCorreo(usuario) { persona ->
+                if (persona != null) {
+                    personaActual = persona
+                } else {
+                    onclik()
+                }
+            }
+        } else {
+            onclik()
+        }
+    }
 }

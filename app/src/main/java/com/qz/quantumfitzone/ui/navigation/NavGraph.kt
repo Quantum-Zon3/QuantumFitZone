@@ -28,8 +28,7 @@ fun NavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.DashboardAdmin.route
-
+        startDestination = Screen.Welcome.route
     ) {
         composable(Screen.Welcome.route) {
             QuantumFitzoneScreen(
@@ -50,7 +49,7 @@ fun NavGraph() {
         composable(Screen.Login.route) {
             LoginForm(
                 onBack = { navController.popBackStack() },
-                onLogin = { navController.navigate(Screen.Profile.route) },
+                onLogin = { navController.navigate(Screen.Dashboard.route) },
                 onForgotPassword = { },
                 onRegister = { navController.navigate(Screen.Registro.route) },
                 onDashboardAdmin = { navController.navigate(Screen.DashboardAdmin.route) }
