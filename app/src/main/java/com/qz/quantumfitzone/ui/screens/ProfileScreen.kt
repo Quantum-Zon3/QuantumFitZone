@@ -1,5 +1,7 @@
 package com.qz.quantumfitzone.ui.screens
 
+import android.content.Context
+import androidx.compose.animation.core.*
 import androidx.compose.animation.core.EaseInOutSine
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -49,12 +51,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.qz.quantumfitzone.viewModel.PersonaViewModel
+// ── Colores del tema ──────────────────────────────────────────────────────────
+private val BgDeep       = Color(0xFF080E1A)
+private val BgCard       = Color(0xFF0D1726)
+private val BgCardAlt    = Color(0xFF0F1C2E)
+private val CyanPrimary  = Color(0xFF00D4FF)
+private val CyanDim      = Color(0xFF0A8FAA)
+private val CyanGlow     = Color(0x3300D4FF)
+private val GoldElite    = Color(0xFFFFD700)
+private val TextPrimary  = Color(0xFFE8F4FF)
+private val TextSecondary= Color(0xFF6B8FAB)
 import com.qz.quantumfitzone.viewModel.UserProfileViewModel
 
 private val BgDeep = Color(0xFF080E1A)
@@ -70,12 +84,17 @@ private val RedSignOut = Color(0xFFFF3B5C)
 
 @Composable
 fun ProfileScreen(
+    context: Context = LocalContext.current,
     onNavigateBack: () -> Unit = {},
     onSignOut: () -> Unit = {},
+
     onNavigate: (BottomNavDestination) -> Unit = {},
-    viewModel: UserProfileViewModel = viewModel()
+    viewModel: PersonaViewModel = viewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        viewModel.usuarioActual(context,onSignOut)
+    }
+    val state = viewModel.personaActual
     val scrollState = rememberScrollState()
 
     val glowAnim = rememberInfiniteTransition(label = "glow")
@@ -198,7 +217,7 @@ fun ProfileScreen(
                 Spacer(Modifier.height(12.dp))
 
                 Text(
-                    text = uiState.userName,
+                    text = state.nombre,
                     color = TextPrimary,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
@@ -226,7 +245,7 @@ fun ProfileScreen(
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        text = "${uiState.role.replaceFirstChar { it.uppercase() }} - Level ${uiState.level}",
+                        text = "Cyber Athlete  ·  Level ${state.imc}",
                         color = CyanPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
@@ -252,6 +271,7 @@ fun ProfileScreen(
                     .padding(vertical = 20.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
+                /*
                 StatItem(
                     value = uiState.workouts.toString(),
                     label = "WORKOUTS",
@@ -269,6 +289,8 @@ fun ProfileScreen(
                     label = "RANK",
                     valueColor = GoldElite
                 )
+
+                 */
             }
 
             Spacer(Modifier.height(28.dp))
@@ -291,30 +313,16 @@ fun ProfileScreen(
                     .clip(RoundedCornerShape(16.dp))
                     .background(BgCard)
             ) {
+                /*
                 SettingsRow(
                     icon = Icons.Outlined.AccountCircle,
                     label = "Account",
-                    onClick = viewModel::onNavigateToAccount
+                    onClick =
                 )
-                SettingsDivider()
-                SettingsRow(
-                    icon = Icons.Outlined.Security,
-                    label = "Privacy",
-                    onClick = viewModel::onNavigateToPrivacy
-                )
-                SettingsDivider()
-                SettingsRow(
-                    icon = Icons.Outlined.Notifications,
-                    label = "Notifications",
-                    onClick = viewModel::onNavigateToNotifications
-                )
-                SettingsDivider()
-                SettingsRow(
-                    icon = Icons.Default.Devices,
-                    label = "Connect Devices",
-                    badge = "1 Active",
-                    onClick = viewModel::onNavigateToConnectDevices
-                )
+                 */
+
+
+
             }
 
             Spacer(Modifier.height(16.dp))
@@ -325,7 +333,7 @@ fun ProfileScreen(
                     .padding(horizontal = 20.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(BgCard)
-                    .clickable { onSignOut() }
+                    .clickable { viewModel.logout(context, onSignOut) }
                     .padding(horizontal = 20.dp, vertical = 18.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
