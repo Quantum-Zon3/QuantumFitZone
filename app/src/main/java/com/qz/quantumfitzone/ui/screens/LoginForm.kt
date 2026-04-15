@@ -56,7 +56,8 @@ fun LoginForm(
     onBack: () -> Unit = {},
     onLogin: () -> Unit = {},
     onForgotPassword: () -> Unit = {},
-    onRegister: () -> Unit = {}
+    onRegister: () -> Unit = {},
+    onDashboardAdmin: () -> Unit = {}
 ) {
     val state = viewModel.personaEntity
     var passwordVisible by remember { mutableStateOf(false) }
@@ -261,7 +262,7 @@ fun LoginForm(
                     // ── Botón principal ──────────────────────────────────
                     Button(
                         onClick = {
-                            viewModel.login({ onLogin()} ,context)
+                            viewModel.login({ onLogin()} , { onDashboardAdmin()},context)
                         },
                         modifier = Modifier
                             .fillMaxWidth()

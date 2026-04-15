@@ -79,6 +79,11 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         personaEntity = personaEntity.copy(imc = peso/estatura)
     }
 
+    fun onRolChange(valor: String) {
+        personaEntity = personaEntity.copy(rol = valor)
+    }
+
+
     // ----------------------------
     // LÓGICA DE REGISTRO
     // ----------------------------
@@ -124,7 +129,7 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
     // ----------------------------
     // LÓGICA DE Login
     // ----------------------------
-    fun login(Onclik: () -> Unit, context: Context) {
+    fun login(OnclikDashboardUsuario: () -> Unit, OnclikDashboardAdmin: () -> Unit , context: Context) {
         if (
             personaEntity.correo.isBlank() ||
             personaEntity.password.isBlank()
@@ -144,8 +149,14 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
 
                 if (personaEncontrada != null) {
                     Log.d("PERSONAS", "Se encontró: $personaEncontrada")
-                    guardarDatos(context, personaEntity.correo, personaEntity.password)
-                    Onclik()
+                    if (personaEncontrada.rol ==  "usuario") {
+                        guardarDatos(context, personaEntity.correo, personaEntity.password)
+                        OnclikDashboardUsuario()
+                    }
+                    else if (personaEncontrada.rol == "admin") {
+                        guardarDatos(context, personaEntity.correo, personaEntity.password)
+                        OnclikDashboardAdmin()
+                    }
                 } else {
                     val error = personaEntity.copy(
                         resultado = "Correo electrónico o contraseña incorrectos."
@@ -176,4 +187,21 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
             return
         }
     }
+    /*
+    fun admin() {
+        var personaAdmin by mutableStateOf(PersonaEntity())
+        personaAdmin = personaAdmin.copy(
+            nombre = "Carlitos",
+            rol = "admin",
+            correo = "carlitos@fitness.com",
+            estado = true,
+            peso = 70f,
+            estatura = 1.70f,
+            imc = 70f/1.70f,
+            password = "Soy123"
+            )
+        println("PersonaAdmin: $personaAdmin")
+        insertar(personaAdmin)
+    }
+     */
 }
