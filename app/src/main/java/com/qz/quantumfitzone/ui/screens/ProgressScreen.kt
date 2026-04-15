@@ -33,22 +33,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.qz.quantumfitzone.viewModel.ExerciseProgressUiState
-import com.qz.quantumfitzone.viewModel.ExerciseProgressViewModel
-import com.qz.quantumfitzone.viewModel.ProgressHistoryPoint
-import com.qz.quantumfitzone.viewModel.ProgressMetric
+import com.qz.quantumfitzone.ui.state.ExerciseProgressUiState
+import com.qz.quantumfitzone.ui.state.ProgressHistoryPoint
+import com.qz.quantumfitzone.ui.state.ProgressMetric
+import com.qz.quantumfitzone.viewModel.EjercicioViewModel
 import java.util.Locale
 
 @Composable
 fun ProgressScreen(
     exerciseId: Int,
     onNavigateBack: () -> Unit = {},
-    viewModel: ExerciseProgressViewModel = viewModel()
+    viewModel: EjercicioViewModel = viewModel()
 ) {
-    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+    val uiState = viewModel.progresoUiState.collectAsStateWithLifecycle().value
 
     LaunchedEffect(exerciseId) {
-        viewModel.load(exerciseId)
+        viewModel.loadProgreso(exerciseId)
     }
 
     Box(

@@ -1,4 +1,4 @@
-package com.qz.quantumfitzone.viewModel
+package com.qz.quantumfitzone.ui.state
 
 import com.qz.quantumfitzone.data.model.HistorialEntrenamientoEntity
 

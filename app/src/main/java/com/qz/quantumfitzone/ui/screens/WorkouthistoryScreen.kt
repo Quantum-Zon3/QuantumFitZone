@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qz.quantumfitzone.data.model.HistorialEntrenamientoEntity
-import com.qz.quantumfitzone.viewModel.WorkoutHistoryViewModel
+import com.qz.quantumfitzone.viewModel.HistorialEntrenamientoViewModel
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -91,7 +91,7 @@ private data class TopPerformanceUi(
 fun WorkoutHistoryScreen(
     onNavigate: (BottomNavDestination) -> Unit = {},
     onOpenRoutine: (Int) -> Unit = {},
-    viewModel: WorkoutHistoryViewModel = viewModel()
+    viewModel: HistorialEntrenamientoViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val sessions = remember(uiState.sesiones) {
