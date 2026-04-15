@@ -8,8 +8,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.qz.quantumfitzone.data.model.PersonaEntity
+import com.qz.quantumfitzone.clases.PersonaEditorState
 import com.qz.quantumfitzone.data.local.repository.DatabaseProvider
+import com.qz.quantumfitzone.data.model.PersonaEntity
 import kotlinx.coroutines.launch
 
 class PersonaViewModel(application: Application) : AndroidViewModel(application) {
@@ -51,6 +52,109 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     var personaActual by mutableStateOf(PersonaEntity())
+    var searchQuery by mutableStateOf("")
+        private set
+
+    var editorState by mutableStateOf<PersonaEditorState?>(null)
+        private set
+
+    var personaToDelete by mutableStateOf<PersonaEntity?>(null)
+        private set
+
+    fun updateSearchQuery(value: String) {
+        searchQuery = value
+    }
+
+    fun filteredPersonas(personas: List<PersonaEntity>): List<PersonaEntity> {
+        val query = searchQuery.trim().lowercase()
+        if (query.isEmpty()) return personas
+
+        return personas.filter { persona ->
+            persona.nombre.lowercase().contains(query) ||
+                persona.correo.lowercase().contains(query) ||
+                persona.rol.lowercase().contains(query)
+        }
+    }
+
+    fun openCreateDialog() {
+        editorState = PersonaEditorState.creating()
+    }
+
+    fun openEditDialog(persona: PersonaEntity) {
+        editorState = PersonaEditorState.editing(persona)
+    }
+
+    fun dismissEditorDialog() {
+        editorState = null
+    }
+
+    fun requestDelete(persona: PersonaEntity) {
+        personaToDelete = persona
+    }
+
+    fun dismissDeleteDialog() {
+        personaToDelete = null
+    }
+
+    fun updateEditorNombre(value: String) {
+        editorState = editorState?.copy(nombre = value, errorMessage = null)
+    }
+
+    fun updateEditorCorreo(value: String) {
+        editorState = editorState?.let { current ->
+            if (current.isEditMode) current else current.copy(correo = value, errorMessage = null)
+        }
+    }
+
+    fun updateEditorPassword(value: String) {
+        editorState = editorState?.copy(password = value, errorMessage = null)
+    }
+
+    fun updateEditorRol(value: String) {
+        editorState = editorState?.copy(rol = value, errorMessage = null)
+    }
+
+    fun updateEditorPeso(value: String) {
+        editorState = editorState?.copy(peso = value, errorMessage = null)
+    }
+
+    fun updateEditorEstatura(value: String) {
+        editorState = editorState?.copy(estatura = value, errorMessage = null)
+    }
+
+    fun updateEditorEstado(value: Boolean) {
+        editorState = editorState?.copy(estado = value, errorMessage = null)
+    }
+
+    fun saveEditor(): String? {
+        val currentEditor = editorState ?: return "No hay un formulario activo."
+        val validationError = currentEditor.validate()
+        if (validationError != null) {
+            editorState = currentEditor.copy(errorMessage = validationError)
+            return validationError
+        }
+
+        val persona = currentEditor.toPersonaEntity()
+        if (currentEditor.isEditMode) {
+            actualizar(persona)
+        } else {
+            insertar(persona)
+        }
+        editorState = null
+        return null
+    }
+
+    fun toggleStatus(persona: PersonaEntity) {
+        actualizar(persona.copy(estado = !persona.estado))
+    }
+
+    fun confirmDelete() {
+        val persona = personaToDelete ?: return
+        eliminar(persona)
+        personaToDelete = null
+    }
+
+
     var personaEntity by mutableStateOf(PersonaEntity())
         private set
 
@@ -188,6 +292,7 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
             return
         }
     }
+}
     /*
     fun admin() {
         var personaAdmin by mutableStateOf(PersonaEntity())

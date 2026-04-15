@@ -2,10 +2,28 @@ package com.qz.quantumfitzone.ui.screens
 
 import android.content.Context
 import androidx.compose.animation.core.*
+import androidx.compose.animation.core.EaseInOutSine
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,14 +31,25 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Security
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -40,8 +69,18 @@ private val CyanGlow     = Color(0x3300D4FF)
 private val GoldElite    = Color(0xFFFFD700)
 private val TextPrimary  = Color(0xFFE8F4FF)
 private val TextSecondary= Color(0xFF6B8FAB)
+import com.qz.quantumfitzone.viewModel.UserProfileViewModel
+
+private val BgDeep = Color(0xFF080E1A)
+private val BgCard = Color(0xFF0D1726)
+private val CyanPrimary = Color(0xFF00D4FF)
+private val CyanDim = Color(0xFF0A8FAA)
+private val CyanGlow = Color(0x3300D4FF)
+private val GoldElite = Color(0xFFFFD700)
+private val TextPrimary = Color(0xFFE8F4FF)
+private val TextSecondary = Color(0xFF6B8FAB)
 private val DividerColor = Color(0xFF1A2F45)
-private val RedSignOut   = Color(0xFFFF3B5C)
+private val RedSignOut = Color(0xFFFF3B5C)
 
 @Composable
 fun ProfileScreen(
@@ -58,11 +97,10 @@ fun ProfileScreen(
     val state = viewModel.personaActual
     val scrollState = rememberScrollState()
 
-    // Animación del glow del avatar
     val glowAnim = rememberInfiniteTransition(label = "glow")
     val glowAlpha by glowAnim.animateFloat(
         initialValue = 0.4f,
-        targetValue  = 0.9f,
+        targetValue = 0.9f,
         animationSpec = infiniteRepeatable(
             animation = tween(1800, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse
@@ -75,7 +113,6 @@ fun ProfileScreen(
             .fillMaxSize()
             .background(BgDeep)
     ) {
-        // Fondo degradado sutil en la parte superior
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -95,10 +132,10 @@ fun ProfileScreen(
                 .fillMaxWidth()
                 .verticalScroll(scrollState)
         ) {
-            // ── Top Bar ───────────────────────────────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .statusBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -118,23 +155,19 @@ fun ProfileScreen(
                     letterSpacing = 1.sp
                 )
                 Spacer(Modifier.weight(1f))
-                // Espacio reservado para simetría
                 Box(modifier = Modifier.size(48.dp))
             }
 
-            // ── Avatar + Info ─────────────────────────────────────────────────
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Avatar con glow animado
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.size(110.dp)
                 ) {
-                    // Glow exterior
                     Box(
                         modifier = Modifier
                             .size(110.dp)
@@ -148,7 +181,6 @@ fun ProfileScreen(
                                 )
                             )
                     )
-                    // Anillo cyan
                     Box(
                         modifier = Modifier
                             .size(96.dp)
@@ -157,7 +189,6 @@ fun ProfileScreen(
                             .background(BgCard),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Placeholder avatar — reemplazar con AsyncImage cuando tengas Coil
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = "Avatar",
@@ -165,7 +196,6 @@ fun ProfileScreen(
                             modifier = Modifier.size(52.dp)
                         )
                     }
-                    // Badge verificado
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -194,6 +224,16 @@ fun ProfileScreen(
                     letterSpacing = 0.5.sp
                 )
 
+                if (uiState.email.isNotBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = uiState.email,
+                        color = TextSecondary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
                 Spacer(Modifier.height(4.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -215,7 +255,6 @@ fun ProfileScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // ── Stats Card ────────────────────────────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -240,13 +279,13 @@ fun ProfileScreen(
                 )
                 StatDivider()
                 StatItem(
-                    value = "${uiState.streakDays}🔥",
+                    value = "${uiState.streakDays} Days",
                     label = "STREAK",
                     valueColor = TextPrimary
                 )
                 StatDivider()
                 StatItem(
-                    value = "⭐ ${uiState.rank}",
+                    value = "Rank ${uiState.rank}",
                     label = "RANK",
                     valueColor = GoldElite
                 )
@@ -256,7 +295,6 @@ fun ProfileScreen(
 
             Spacer(Modifier.height(28.dp))
 
-            // ── Settings Section ──────────────────────────────────────────────
             Text(
                 text = "SETTINGS",
                 color = TextSecondary,
@@ -289,7 +327,6 @@ fun ProfileScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // ── Sign Out ──────────────────────────────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -323,11 +360,9 @@ fun ProfileScreen(
                 )
             }
 
-            // Espacio para que el scroll no quede detrás de la bottom nav
             Spacer(Modifier.height(72.dp))
         }
 
-        // ── Bottom Nav Bar ────────────────────────────────────────────────────
         BottomNavBar(
             selected = BottomNavDestination.PROFILE,
             onItemClick = onNavigate,
@@ -335,8 +370,6 @@ fun ProfileScreen(
         )
     }
 }
-
-// ── Componentes auxiliares ────────────────────────────────────────────────────
 
 @Composable
 private fun StatItem(
@@ -395,7 +428,6 @@ private fun SettingsRow(
             .padding(horizontal = 20.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Icono con fondo
         Box(
             modifier = Modifier
                 .size(36.dp)
