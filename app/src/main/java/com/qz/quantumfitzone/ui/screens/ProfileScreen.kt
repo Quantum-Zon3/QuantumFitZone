@@ -55,7 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.qz.quantumfitzone.viewModel.ProfileViewModel
+import com.qz.quantumfitzone.viewModel.UserProfileViewModel
 
 private val BgDeep = Color(0xFF080E1A)
 private val BgCard = Color(0xFF0D1726)
@@ -73,7 +73,7 @@ fun ProfileScreen(
     onNavigateBack: () -> Unit = {},
     onSignOut: () -> Unit = {},
     onNavigate: (BottomNavDestination) -> Unit = {},
-    viewModel: ProfileViewModel = viewModel()
+    viewModel: UserProfileViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
@@ -205,6 +205,16 @@ fun ProfileScreen(
                     letterSpacing = 0.5.sp
                 )
 
+                if (uiState.email.isNotBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = uiState.email,
+                        color = TextSecondary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
                 Spacer(Modifier.height(4.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -216,7 +226,7 @@ fun ProfileScreen(
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        text = "Cyber Athlete - Level ${uiState.level}",
+                        text = "${uiState.role.replaceFirstChar { it.uppercase() }} - Level ${uiState.level}",
                         color = CyanPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
