@@ -1,9 +1,11 @@
 package com.qz.quantumfitzone.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.quantumfitzone.QuantumFitzoneScreen
 import com.qz.quantumfitzone.SupportScreen
 import com.qz.quantumfitzone.ui.components.Screen
@@ -11,11 +13,13 @@ import com.qz.quantumfitzone.ui.screens.AdminUsersScreen
 import com.qz.quantumfitzone.ui.screens.BottomNavDestination
 import com.qz.quantumfitzone.ui.screens.DashboardScreen
 import com.qz.quantumfitzone.ui.screens.EditRoutineScreen
+import com.qz.quantumfitzone.ui.screens.ExerciseHistoryDetailScreen
 import com.qz.quantumfitzone.ui.screens.LoginForm
 import com.qz.quantumfitzone.ui.screens.MyRoutinesScreen
 import com.qz.quantumfitzone.ui.screens.ProfileScreen
 import com.qz.quantumfitzone.ui.screens.ProgressScreen
 import com.qz.quantumfitzone.ui.screens.RegistroUsuarioForm
+import com.qz.quantumfitzone.ui.screens.RoutineHistoryDetailScreen
 import com.qz.quantumfitzone.ui.screens.DashboardScreenAdmin
 import com.qz.quantumfitzone.ui.screens.WorkoutHistoryScreen
 import com.qz.quantumfitzone.ui.screens.AdminMachinesScreen
@@ -69,7 +73,7 @@ fun NavGraph() {
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         BottomNavDestination.SUPPORT -> navController.navigate(Screen.SupportCenter.route)
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
-                        BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
+                        BottomNavDestination.PROGRESS -> { }
                         BottomNavDestination.PROFILE -> { }
                         else -> {}
                     }
@@ -85,7 +89,7 @@ fun NavGraph() {
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         BottomNavDestination.SUPPORT -> navController.navigate(Screen.SupportCenter.route)
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
-                        BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
+                        BottomNavDestination.PROGRESS -> { }
                         BottomNavDestination.ROUTINES -> { }
                         else -> {}
                     }
@@ -112,7 +116,7 @@ fun NavGraph() {
                         BottomNavDestination.ROUTINES -> navController.navigate(Screen.MyRoutines.route)
                         BottomNavDestination.PROFILE -> navController.navigate(Screen.Profile.route)
                         BottomNavDestination.DASHBOARD -> { }
-                        BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
+                        BottomNavDestination.PROGRESS -> { }
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
                         BottomNavDestination.SUPPORT -> navController.navigate(Screen.SupportCenter.route)
                         else -> {}
@@ -131,7 +135,7 @@ fun NavGraph() {
                         BottomNavDestination.SUPPORT -> { }
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
                         BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
-                        BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
+                        BottomNavDestination.PROGRESS -> { }
                         else -> {}
                     }
                 }
@@ -146,28 +150,53 @@ fun NavGraph() {
                         BottomNavDestination.PROFILE -> navController.navigate(Screen.Profile.route)
                         BottomNavDestination.SUPPORT -> navController.navigate(Screen.SupportCenter.route)
                         BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
-                        BottomNavDestination.PROGRESS -> navController.navigate(Screen.Progress.route)
+                        BottomNavDestination.PROGRESS -> { }
                         BottomNavDestination.HISTORY -> {navController.navigate(Screen.WorkoutHistory.route) }
                         else -> {}
                     }
+                },
+                onOpenRoutine = { historyId ->
+                    navController.navigate(Screen.RoutineHistoryDetail.createRoute(historyId))
                 }
             )
         }
 
-        composable(Screen.Progress.route) {
-            ProgressScreen(
+        composable(
+            route = Screen.RoutineHistoryDetail.route,
+            arguments = listOf(navArgument("historyId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val historyId = backStackEntry.arguments?.getInt("historyId") ?: return@composable
+            RoutineHistoryDetailScreen(
+                historyId = historyId,
                 onNavigateBack = { navController.popBackStack() },
-                onNavigate = { destination ->
-                    when (destination) {
-                        BottomNavDestination.ROUTINES -> navController.navigate(Screen.MyRoutines.route)
-                        BottomNavDestination.PROFILE -> navController.navigate(Screen.Profile.route)
-                        BottomNavDestination.SUPPORT -> navController.navigate(Screen.SupportCenter.route)
-                        BottomNavDestination.DASHBOARD -> navController.navigate(Screen.Dashboard.route)
-                        BottomNavDestination.HISTORY -> navController.navigate(Screen.WorkoutHistory.route)
-                        BottomNavDestination.PROGRESS -> {navController.navigate(Screen.Progress.route) }
-                        else -> {}
-                    }
+                onOpenExercise = { exerciseId ->
+                    navController.navigate(Screen.ExerciseHistoryDetail.createRoute(exerciseId))
                 }
+            )
+        }
+
+        composable(
+            route = Screen.ExerciseHistoryDetail.route,
+            arguments = listOf(navArgument("exerciseId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val exerciseId = backStackEntry.arguments?.getInt("exerciseId") ?: return@composable
+            ExerciseHistoryDetailScreen(
+                exerciseId = exerciseId,
+                onNavigateBack = { navController.popBackStack() },
+                onOpenProgress = { selectedExerciseId ->
+                    navController.navigate(Screen.Progress.createRoute(selectedExerciseId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.Progress.route,
+            arguments = listOf(navArgument("exerciseId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val exerciseId = backStackEntry.arguments?.getInt("exerciseId") ?: return@composable
+            ProgressScreen(
+                exerciseId = exerciseId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

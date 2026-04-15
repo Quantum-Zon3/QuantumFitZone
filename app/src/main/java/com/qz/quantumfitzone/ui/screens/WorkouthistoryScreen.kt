@@ -90,6 +90,7 @@ private data class TopPerformanceUi(
 @Composable
 fun WorkoutHistoryScreen(
     onNavigate: (BottomNavDestination) -> Unit = {},
+    onOpenRoutine: (Int) -> Unit = {},
     viewModel: WorkoutHistoryViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -267,7 +268,10 @@ fun WorkoutHistoryScreen(
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                         )
                         dailySessions.forEach { session ->
-                            SessionRow(session = session)
+                            SessionRow(
+                                session = session,
+                                onOpenRoutine = { onOpenRoutine(session.id) }
+                            )
                             Spacer(Modifier.height(8.dp))
                         }
                     }
@@ -565,7 +569,10 @@ private fun InfoCard(title: String, message: String) {
 }
 
 @Composable
-private fun SessionRow(session: WorkoutSessionUi) {
+private fun SessionRow(
+    session: WorkoutSessionUi,
+    onOpenRoutine: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -573,6 +580,7 @@ private fun SessionRow(session: WorkoutSessionUi) {
             .clip(RoundedCornerShape(14.dp))
             .background(BgCard)
             .border(1.dp, DividerColor, RoundedCornerShape(14.dp))
+            .clickable(onClick = onOpenRoutine)
             .padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -613,6 +621,7 @@ private fun SessionRow(session: WorkoutSessionUi) {
                 .clip(RoundedCornerShape(20.dp))
                 .background(BgCardAlt)
                 .border(1.dp, DividerColor, RoundedCornerShape(20.dp))
+                .clickable(onClick = onOpenRoutine)
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center
         ) {

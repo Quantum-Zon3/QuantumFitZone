@@ -21,7 +21,7 @@ import com.qz.quantumfitzone.data.model.HistorialEntrenamientoEntity
         EjercicioEntity::class,
         HistorialEntrenamientoEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
