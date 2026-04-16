@@ -57,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qz.quantumfitzone.viewModel.PersonaViewModel
 
@@ -315,10 +316,10 @@ fun ProfileScreen(
                     letterSpacing = 0.5.sp
                 )
 
-                if (state.correo.isNotBlank()) {
+                if (uiState.email.isNotBlank()) {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = state.correo,
+                        text = uiState.email,
                         color = TextSecondary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
