@@ -44,6 +44,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,12 +57,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qz.quantumfitzone.viewModel.PersonaViewModel
 
 private val BgDeep = Color(0xFF080E1A)
 private val BgCard = Color(0xFF0D1726)
+private val BgCardAlt = Color(0xFF0F1C2E)
 private val CyanPrimary = Color(0xFF00D4FF)
 private val CyanDim = Color(0xFF0A8FAA)
 private val CyanGlow = Color(0x3300D4FF)
@@ -314,10 +315,10 @@ fun ProfileScreen(
                     letterSpacing = 0.5.sp
                 )
 
-                if (uiState.email.isNotBlank()) {
+                if (state.correo.isNotBlank()) {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = uiState.email,
+                        text = state.correo,
                         color = TextSecondary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium

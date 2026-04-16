@@ -94,12 +94,27 @@ fun NavGraph() {
                         else -> {}
                     }
                 },
-                onEditRoutine = { navController.navigate(Screen.EditRoutine.route) }
+                onEditRoutine = { routineId ->
+                    navController.navigate(Screen.EditRoutine.createRoute(routineId))
+                },
+                onPlayRoutine = {
+                    navController.navigate(Screen.Dashboard.route)
+                }
             )
         }
 
-        composable(Screen.EditRoutine.route) {
+        composable(
+            route = Screen.EditRoutine.route,
+            arguments = listOf(
+                navArgument("routineId") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                }
+            )
+        ) { backStackEntry ->
+            val routineId = backStackEntry.arguments?.getInt("routineId")?.takeIf { it > 0 }
             EditRoutineScreen(
+                routineId = routineId,
                 onNavigateBack = { navController.navigate(Screen.MyRoutines.route) },
                 onListo = {
                     navController.navigate(Screen.MyRoutines.route) {

@@ -11,7 +11,13 @@ sealed class Screen(val route: String) {
 
     object MyRoutines : Screen("myRoutines")
 
-    object EditRoutine : Screen("EditRoutine")
+    object EditRoutine : Screen("EditRoutine?routineId={routineId}") {
+        fun createRoute(routineId: Int? = null) = if (routineId == null) {
+            "EditRoutine"
+        } else {
+            "EditRoutine?routineId=$routineId"
+        }
+    }
 
     object SupportCenter : Screen("SupportCenter")
 
