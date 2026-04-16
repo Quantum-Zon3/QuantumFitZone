@@ -27,8 +27,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +45,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qz.quantumfitzone.viewModel.HistorialEntrenamientoViewModel
+import kotlinx.coroutines.delay
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 private val BgDeep = Color(0xFF080E1A)
 private val BgCard = Color(0xFF0D1726)
@@ -58,6 +66,19 @@ fun DashboardScreen(
     viewModel: HistorialEntrenamientoViewModel = viewModel()
 ) {
     val activeSessionState by viewModel.sesionActivaUiState.collectAsStateWithLifecycle()
+    var elapsedSeconds by remember(activeSessionState.startedAt) { mutableLongStateOf(0L) }
+
+    LaunchedEffect(activeSessionState.hasActiveSession, activeSessionState.startedAt) {
+        if (!activeSessionState.hasActiveSession || activeSessionState.startedAt == null) {
+            elapsedSeconds = 0L
+            return@LaunchedEffect
+        }
+
+        while (true) {
+            elapsedSeconds = calculateElapsedSeconds(activeSessionState.startedAt)
+            delay(1000)
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -158,7 +179,8 @@ fun DashboardScreen(
                 ActiveRoutineCard(
                     title = activeSessionState.routineTitle,
                     category = activeSessionState.category,
-                    date = activeSessionState.date
+                    date = activeSessionState.date,
+                    elapsedTime = formatElapsedTime(elapsedSeconds)
                 )
             } else {
                 StartRoutineCard(onStartRoutine = onStartRoutine)
@@ -184,7 +206,8 @@ fun DashboardScreen(
 private fun ActiveRoutineCard(
     title: String,
     category: String,
-    date: String
+    date: String,
+    elapsedTime: String
 ) {
     Column(
         modifier = Modifier
@@ -216,7 +239,21 @@ private fun ActiveRoutineCard(
         }
         Spacer(Modifier.height(14.dp))
         Text(
-            text = "The live timer and exercise tracker will appear here in the next step.",
+            text = "Elapsed time",
+            color = TextSecondary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = elapsedTime,
+            color = CyanPrimary,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "The exercise tracker and finish action will appear in the next steps.",
             color = TextSecondary,
             fontSize = 13.sp
         )
@@ -327,4 +364,21 @@ private fun SessionBadge(label: String) {
 @Composable
 fun DashboardScreenPreview() {
     DashboardScreen()
+}
+
+private fun calculateElapsedSeconds(startedAt: String?): Long {
+    if (startedAt.isNullOrBlank()) return 0L
+
+    val start = runCatching {
+        LocalDateTime.parse(startedAt, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    }.getOrNull() ?: return 0L
+
+    return Duration.between(start, LocalDateTime.now()).seconds.coerceAtLeast(0)
+}
+
+private fun formatElapsedTime(totalSeconds: Long): String {
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return "%02d:%02d:%02d".format(hours, minutes, seconds)
 }
