@@ -49,12 +49,14 @@ fun QuantumFitzoneScreen(
     onRegistro: () -> Unit = {},
     onLogin: () -> Unit = {},
     onBack: () -> Unit = {},
-    onDashboard: () -> Unit = {}
+    onDashboard: () -> Unit = {},
+    onDashboardAdmin: () -> Unit = {}
 ) {
     LaunchedEffect(Unit) {
         viewModel.cargarDatos(
             context = context,
-            { onDashboard()}
+            onClickDashboardUsuario = { onDashboard() },
+            onClickDashboardAdmin = { onDashboardAdmin() }
         )
         //viewModel.admin()
     }

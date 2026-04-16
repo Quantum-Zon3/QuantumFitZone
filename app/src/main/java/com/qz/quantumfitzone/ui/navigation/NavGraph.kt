@@ -37,7 +37,8 @@ fun NavGraph() {
                 onRegistro = { navController.navigate(Screen.Registro.route) },
                 onLogin = { navController.navigate(Screen.Login.route) },
                 onBack = { navController.popBackStack() },
-                onDashboard = { navController.navigate(Screen.Dashboard.route) }
+                onDashboard = { navController.navigate(Screen.Dashboard.route) },
+                onDashboardAdmin = { navController.navigate(Screen.DashboardAdmin.route) }
             )
         }
 

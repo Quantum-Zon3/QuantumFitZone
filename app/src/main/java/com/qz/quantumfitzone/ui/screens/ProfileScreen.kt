@@ -1,7 +1,6 @@
 package com.qz.quantumfitzone.ui.screens
 
 import android.content.Context
-import androidx.compose.animation.core.*
 import androidx.compose.animation.core.EaseInOutSine
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -78,16 +77,12 @@ fun ProfileScreen(
     context: Context = LocalContext.current,
     onNavigateBack: () -> Unit = {},
     onSignOut: () -> Unit = {},
-
     onNavigate: (BottomNavDestination) -> Unit = {},
     viewModel: PersonaViewModel = viewModel()
 ) {
-    LaunchedEffect(Unit) {
-        viewModel.usuarioActual(context,onSignOut)
-    }
-    val state = viewModel.personaActual
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
-    val context = LocalContext.current
+    val accountEditorState = viewModel.accountEditorState
 
     val glowAnim = rememberInfiniteTransition(label = "glow")
     val glowAlpha by glowAnim.animateFloat(
@@ -99,8 +94,6 @@ fun ProfileScreen(
         ),
         label = "glowAlpha"
     )
-
-    val accountEditorState = viewModel.accountEditorState
 
     if (accountEditorState != null) {
         AlertDialog(
@@ -314,7 +307,7 @@ fun ProfileScreen(
                 Spacer(Modifier.height(12.dp))
 
                 Text(
-                    text = state.nombre,
+                    text = uiState.userName,
                     color = TextPrimary,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
@@ -359,7 +352,6 @@ fun ProfileScreen(
                     .padding(vertical = 20.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                /*
                 StatItem(
                     value = uiState.workouts.toString(),
                     label = "WORKOUTS",
@@ -377,8 +369,6 @@ fun ProfileScreen(
                     label = "RANK",
                     valueColor = GoldElite
                 )
-
-                 */
             }
 
             Spacer(Modifier.height(28.dp))
@@ -401,7 +391,6 @@ fun ProfileScreen(
                     .clip(RoundedCornerShape(16.dp))
                     .background(BgCard)
             ) {
-                /*
                 SettingsRow(
                     icon = Icons.Default.Edit,
                     label = "Edit My Data",
@@ -415,10 +404,6 @@ fun ProfileScreen(
                     badgeColor = RedDanger,
                     onClick = viewModel::requestDeleteCurrentAccount
                 )
-                 */
-
-
-
             }
 
             Spacer(Modifier.height(16.dp))
