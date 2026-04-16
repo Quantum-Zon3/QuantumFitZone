@@ -31,18 +31,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Security
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -71,6 +72,7 @@ private val TextPrimary = Color(0xFFE8F4FF)
 private val TextSecondary = Color(0xFF6B8FAB)
 private val DividerColor = Color(0xFF1A2F45)
 private val RedSignOut = Color(0xFFFF3B5C)
+private val RedDanger = Color(0xFFFF5C7A)
 
 @Composable
 fun ProfileScreen(
@@ -86,6 +88,7 @@ fun ProfileScreen(
     }
     val state = viewModel.personaActual
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
     val glowAnim = rememberInfiniteTransition(label = "glow")
     val glowAlpha by glowAnim.animateFloat(
@@ -98,6 +101,114 @@ fun ProfileScreen(
         label = "glowAlpha"
     )
 
+    val accountEditorState = viewModel.accountEditorState
+
+    if (accountEditorState != null) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissOwnAccountEditor,
+            title = {
+                Text(
+                    text = "Edit My Data",
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = accountEditorState.nombre,
+                        onValueChange = viewModel::updateOwnNombre,
+                        label = { Text("Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = accountEditorState.correo,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Email") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = accountEditorState.peso,
+                        onValueChange = viewModel::updateOwnPeso,
+                        label = { Text("Weight") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = accountEditorState.estatura,
+                        onValueChange = viewModel::updateOwnEstatura,
+                        label = { Text("Height") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = accountEditorState.password,
+                        onValueChange = viewModel::updateOwnPassword,
+                        label = { Text("Password") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    accountEditorState.errorMessage?.let { error ->
+                        Text(
+                            text = error,
+                            color = RedDanger,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { viewModel.saveOwnAccount() }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissOwnAccountEditor) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = BgCard,
+            titleContentColor = TextPrimary,
+            textContentColor = TextSecondary
+        )
+    }
+
+    if (viewModel.showDeleteAccountDialog) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissDeleteCurrentAccount,
+            title = {
+                Text(
+                    text = "Delete account",
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "Esta accion eliminara tu cuenta y cerrara tu sesion actual.",
+                    color = TextSecondary
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteCurrentAccount(context) {
+                            onSignOut()
+                        }
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissDeleteCurrentAccount) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = BgCard,
+            titleContentColor = TextPrimary,
+            textContentColor = TextSecondary
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -109,10 +220,7 @@ fun ProfileScreen(
                 .height(280.dp)
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF0A1A30),
-                            Color.Transparent
-                        )
+                        colors = listOf(Color(0xFF0A1A30), Color.Transparent)
                     )
                 )
         )
@@ -226,21 +334,12 @@ fun ProfileScreen(
 
                 Spacer(Modifier.height(4.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Bolt,
-                        contentDescription = null,
-                        tint = CyanPrimary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = "Cyber Athlete  ·  Level ${state.imc}",
-                        color = CyanPrimary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                Text(
+                    text = "${uiState.role.replaceFirstChar { it.uppercase() }} - Level ${uiState.level}",
+                    color = CyanPrimary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
             Spacer(Modifier.height(20.dp))
@@ -286,7 +385,7 @@ fun ProfileScreen(
             Spacer(Modifier.height(28.dp))
 
             Text(
-                text = "SETTINGS",
+                text = "MY ACCOUNT",
                 color = TextSecondary,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
@@ -305,9 +404,17 @@ fun ProfileScreen(
             ) {
                 /*
                 SettingsRow(
-                    icon = Icons.Outlined.AccountCircle,
-                    label = "Account",
-                    onClick =
+                    icon = Icons.Default.Edit,
+                    label = "Edit My Data",
+                    onClick = viewModel::openOwnAccountEditor
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = Icons.Default.DeleteForever,
+                    label = "Delete My Account",
+                    badge = "Permanent",
+                    badgeColor = RedDanger,
+                    onClick = viewModel::requestDeleteCurrentAccount
                 )
                  */
 
@@ -323,7 +430,11 @@ fun ProfileScreen(
                     .padding(horizontal = 20.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(BgCard)
-                    .clickable { viewModel.logout(context, onSignOut) }
+                    .clickable {
+                        viewModel.signOut(context) {
+                            onSignOut()
+                        }
+                    }
                     .padding(horizontal = 20.dp, vertical = 18.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -409,6 +520,7 @@ private fun SettingsRow(
     icon: ImageVector,
     label: String,
     badge: String? = null,
+    badgeColor: Color = CyanPrimary,
     onClick: () -> Unit
 ) {
     Row(
@@ -428,7 +540,7 @@ private fun SettingsRow(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = CyanPrimary,
+                tint = badgeColor,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -446,12 +558,12 @@ private fun SettingsRow(
         if (badge != null) {
             Text(
                 text = badge,
-                color = CyanPrimary,
+                color = badgeColor,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(CyanGlow)
+                    .background(badgeColor.copy(alpha = 0.15f))
                     .padding(horizontal = 8.dp, vertical = 3.dp)
             )
             Spacer(Modifier.width(6.dp))
