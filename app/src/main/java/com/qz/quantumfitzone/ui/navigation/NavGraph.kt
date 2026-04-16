@@ -136,7 +136,8 @@ fun NavGraph() {
                         BottomNavDestination.SUPPORT -> navController.navigate(Screen.SupportCenter.route)
                         else -> {}
                     }
-                }
+                },
+                onStartRoutine = { navController.navigate(Screen.MyRoutines.route) }
             )
         }
 
