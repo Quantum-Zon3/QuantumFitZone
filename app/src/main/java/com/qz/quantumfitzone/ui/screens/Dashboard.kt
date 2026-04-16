@@ -190,7 +190,9 @@ fun DashboardScreen(
                     elapsedTime = formatElapsedTime(elapsedSeconds),
                     completedCount = completedCount,
                     pendingCount = pendingCount,
-                    totalCount = totalCount
+                    totalCount = totalCount,
+                    canFinishRoutine = totalCount > 0 && pendingCount == 0,
+                    onFinishRoutine = viewModel::finalizarSesionActiva
                 )
             } else {
                 StartRoutineCard(onStartRoutine = onStartRoutine)
@@ -249,7 +251,9 @@ private fun ActiveRoutineCard(
     elapsedTime: String,
     completedCount: Int,
     pendingCount: Int,
-    totalCount: Int
+    totalCount: Int,
+    canFinishRoutine: Boolean,
+    onFinishRoutine: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -306,6 +310,28 @@ private fun ActiveRoutineCard(
             color = TextSecondary,
             fontSize = 13.sp
         )
+        Spacer(Modifier.height(14.dp))
+        Button(
+            onClick = onFinishRoutine,
+            enabled = canFinishRoutine,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = CyanPrimary,
+                contentColor = BgDeep,
+                disabledContainerColor = BgCardAlt,
+                disabledContentColor = TextSecondary
+            ),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = if (canFinishRoutine) {
+                    "Finish Routine"
+                } else {
+                    "Complete all exercises to finish"
+                },
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 

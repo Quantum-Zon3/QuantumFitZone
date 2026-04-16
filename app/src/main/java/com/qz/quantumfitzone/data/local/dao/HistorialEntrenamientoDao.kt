@@ -17,7 +17,7 @@ interface HistorialEntrenamientoDao {
     @Query(
         """
         SELECT * FROM historial_entrenamientos
-        WHERE correo_usuario = :correoUsuario
+        WHERE correo_usuario = :correoUsuario AND completado = 1
         ORDER BY fecha DESC, id_historial DESC
         """
     )

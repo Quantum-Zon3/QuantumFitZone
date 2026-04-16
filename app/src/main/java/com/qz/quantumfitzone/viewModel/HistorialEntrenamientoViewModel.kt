@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class HistorialEntrenamientoViewModel(application: Application) : AndroidViewModel(application) {
     private val database = DatabaseProvider.getDatabase(application)
@@ -166,6 +169,33 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
             it.copy(completado = completed)
         }
         persistSesionActivaEjercicio(historyExerciseId, markAsCompleted = completed)
+    }
+
+    fun finalizarSesionActiva() {
+        val session = _sesionActivaUiState.value
+        val exercisesState = _sesionActivaEjerciciosUiState.value
+
+        if (!session.hasActiveSession || session.historyId == null) return
+        if (exercisesState.items.isEmpty() || exercisesState.items.any { !it.completado }) return
+
+        viewModelScope.launch {
+            val historial = historialDao.obtenerPorId(session.historyId) ?: return@launch
+            val endDateTime = LocalDateTime.now()
+            val startDateTime = session.startedAt?.toLocalDateTimeOrNull()
+            val elapsedSeconds = startDateTime?.let {
+                Duration.between(it, endDateTime).seconds.coerceAtLeast(0).toInt()
+            } ?: 0
+
+            historialDao.actualizar(
+                historial.copy(
+                    fecha_fin = endDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                    duracion_segundos = elapsedSeconds,
+                    duracion_minutos = (elapsedSeconds / 60).coerceAtLeast(0),
+                    en_progreso = false,
+                    completado = true
+                )
+            )
+        }
     }
 
     // SECCION: DETALLE DE RUTINA DESDE HISTORIAL
@@ -320,5 +350,11 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
 
     private fun String.toNormalizedDoubleOrNull(): Double? {
         return replace(',', '.').toDoubleOrNull()
+    }
+
+    private fun String.toLocalDateTimeOrNull(): LocalDateTime? {
+        return runCatching {
+            LocalDateTime.parse(this, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        }.getOrNull()
     }
 }
