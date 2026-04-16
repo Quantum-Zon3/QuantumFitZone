@@ -303,6 +303,8 @@ fun EditRoutineScreen(
                 viewModel.selectedExercises.forEachIndexed { index, exercise ->
                     RoutineExerciseRow(
                         exercise = exercise,
+                        onPesoActualChange = { viewModel.updateExercisePesoActual(exercise.exerciseId, it) },
+                        onPesoObjetivoChange = { viewModel.updateExercisePesoObjetivo(exercise.exerciseId, it) },
                         onDelete = { viewModel.removeExerciseFromRoutine(exercise.exerciseId) }
                     )
                     if (index < viewModel.selectedExercises.lastIndex) {
@@ -528,6 +530,8 @@ private fun EmptyExerciseSelectionCard(onOpenCatalog: () -> Unit) {
 @Composable
 private fun RoutineExerciseRow(
     exercise: RoutineExerciseSelection,
+    onPesoActualChange: (String) -> Unit,
+    onPesoObjetivoChange: (String) -> Unit,
     onDelete: () -> Unit
 ) {
     Row(
@@ -581,6 +585,28 @@ private fun RoutineExerciseRow(
                     color = CyanPrimary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = exercise.pesoActual,
+                    onValueChange = onPesoActualChange,
+                    label = { Text("Peso actual") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+
+                OutlinedTextField(
+                    value = exercise.pesoObjetivo,
+                    onValueChange = onPesoObjetivoChange,
+                    label = { Text("Peso objetivo") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
             }
         }

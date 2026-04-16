@@ -28,5 +28,7 @@ data class RutinaEjercicioEntity(
     val id_rutina_ejercicio: Int = 0,
     val id_rutina: Int,
     val id_exercise: Int,
-    val orden: Int
+    val orden: Int,
+    val peso_actual: Double? = null,
+    val peso_objetivo: Double? = null
 )

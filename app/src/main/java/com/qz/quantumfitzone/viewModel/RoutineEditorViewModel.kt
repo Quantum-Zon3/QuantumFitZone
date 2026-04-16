@@ -23,7 +23,9 @@ data class RoutineExerciseSelection(
     val grupoMuscular: String?,
     val machineName: String?,
     val series: Int?,
-    val repeticiones: Int?
+    val repeticiones: Int?,
+    val pesoActual: String = "",
+    val pesoObjetivo: String = ""
 )
 
 class RoutineEditorViewModel(application: Application) : AndroidViewModel(application) {
@@ -123,6 +125,18 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
         exerciseForm = exerciseForm.copy(repeticiones = value.toIntOrNull())
     }
 
+    fun updateExercisePesoActual(exerciseId: Int, value: String) {
+        selectedExercises.replaceAll { current ->
+            if (current.exerciseId == exerciseId) current.copy(pesoActual = value) else current
+        }
+    }
+
+    fun updateExercisePesoObjetivo(exerciseId: Int, value: String) {
+        selectedExercises.replaceAll { current ->
+            if (current.exerciseId == exerciseId) current.copy(pesoObjetivo = value) else current
+        }
+    }
+
     fun addExerciseToRoutine(
         exercise: ExerciseCatalogEntity,
         machines: List<MaquinaEntity>
@@ -137,7 +151,9 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
                 grupoMuscular = exercise.grupo_muscular,
                 machineName = machines.firstOrNull { it.id_maquina == exercise.id_maquina }?.nombre,
                 series = exercise.series,
-                repeticiones = exercise.repeticiones
+                repeticiones = exercise.repeticiones,
+                pesoActual = "",
+                pesoObjetivo = ""
             )
         )
         routineError = null
@@ -241,7 +257,9 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
                     RutinaEjercicioEntity(
                         id_rutina = routineId,
                         id_exercise = exercise.exerciseId,
-                        orden = index
+                        orden = index,
+                        peso_actual = exercise.pesoActual.toDoubleOrNull(),
+                        peso_objetivo = exercise.pesoObjetivo.toDoubleOrNull()
                     )
                 )
             }
@@ -262,9 +280,6 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
         viewModelScope.launch {
             val routine = routineDao.obtenerPorId(routineId) ?: return@launch
             val assignments = routineExerciseDao.obtenerPorRutinaLista(routineId)
-            val exercises = assignments.mapNotNull { assignment ->
-                exerciseCatalogDao.obtenerPorId(assignment.id_exercise)
-            }
 
             currentRoutineId = routine.id_rutina
             routineName = routine.nombre
@@ -273,7 +288,8 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
             routineError = null
             selectedExercises.clear()
             selectedExercises.addAll(
-                exercises.map { exercise ->
+                assignments.mapNotNull { assignment ->
+                    val exercise = exerciseCatalogDao.obtenerPorId(assignment.id_exercise) ?: return@mapNotNull null
                     RoutineExerciseSelection(
                         exerciseId = exercise.id_exercise,
                         nombre = exercise.nombre,
@@ -281,7 +297,9 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
                         grupoMuscular = exercise.grupo_muscular,
                         machineName = machines.firstOrNull { it.id_maquina == exercise.id_maquina }?.nombre,
                         series = exercise.series,
-                        repeticiones = exercise.repeticiones
+                        repeticiones = exercise.repeticiones,
+                        pesoActual = assignment.peso_actual.formatWeight(),
+                        pesoObjetivo = assignment.peso_objetivo.formatWeight()
                     )
                 }
             )
@@ -299,5 +317,14 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
 
     companion object {
         const val DEFAULT_CATEGORY = "Strength & Conditioning"
+    }
+}
+
+private fun Double?.formatWeight(): String {
+    if (this == null) return ""
+    return if (this % 1.0 == 0.0) {
+        this.toInt().toString()
+    } else {
+        this.toString()
     }
 }
