@@ -23,6 +23,26 @@ interface HistorialEntrenamientoDao {
     )
     fun obtenerPorUsuario(correoUsuario: String): Flow<List<HistorialEntrenamientoEntity>>
 
+    @Query(
+        """
+        SELECT * FROM historial_entrenamientos
+        WHERE correo_usuario = :correoUsuario AND en_progreso = 1
+        ORDER BY id_historial DESC
+        LIMIT 1
+        """
+    )
+    fun obtenerSesionActivaPorUsuario(correoUsuario: String): Flow<HistorialEntrenamientoEntity?>
+
+    @Query(
+        """
+        SELECT * FROM historial_entrenamientos
+        WHERE correo_usuario = :correoUsuario AND en_progreso = 1
+        ORDER BY id_historial DESC
+        LIMIT 1
+        """
+    )
+    suspend fun obtenerSesionActivaActual(correoUsuario: String): HistorialEntrenamientoEntity?
+
     @Query("SELECT * FROM historial_entrenamientos WHERE id_historial = :id")
     suspend fun obtenerPorId(id: Int): HistorialEntrenamientoEntity?
 
