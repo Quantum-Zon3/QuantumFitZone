@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
@@ -44,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.qz.quantumfitzone.ui.state.ActiveRoutineExerciseItemUiState
 import com.qz.quantumfitzone.viewModel.HistorialEntrenamientoViewModel
 import kotlinx.coroutines.delay
 import java.time.Duration
@@ -66,7 +69,11 @@ fun DashboardScreen(
     viewModel: HistorialEntrenamientoViewModel = viewModel()
 ) {
     val activeSessionState by viewModel.sesionActivaUiState.collectAsStateWithLifecycle()
+    val activeExercisesState by viewModel.sesionActivaEjerciciosUiState.collectAsStateWithLifecycle()
     var elapsedSeconds by remember(activeSessionState.startedAt) { mutableLongStateOf(0L) }
+    val completedCount = activeExercisesState.items.count { it.completado }
+    val totalCount = activeExercisesState.items.size
+    val pendingCount = (totalCount - completedCount).coerceAtLeast(0)
 
     LaunchedEffect(activeSessionState.hasActiveSession, activeSessionState.startedAt) {
         if (!activeSessionState.hasActiveSession || activeSessionState.startedAt == null) {
@@ -180,7 +187,10 @@ fun DashboardScreen(
                     title = activeSessionState.routineTitle,
                     category = activeSessionState.category,
                     date = activeSessionState.date,
-                    elapsedTime = formatElapsedTime(elapsedSeconds)
+                    elapsedTime = formatElapsedTime(elapsedSeconds),
+                    completedCount = completedCount,
+                    pendingCount = pendingCount,
+                    totalCount = totalCount
                 )
             } else {
                 StartRoutineCard(onStartRoutine = onStartRoutine)
@@ -188,10 +198,39 @@ fun DashboardScreen(
 
             Spacer(Modifier.height(18.dp))
 
-            DashboardMessageCard(
-                title = "What comes next",
-                message = "In the next block we will load the active session exercises here, so you can complete the routine from this dashboard."
-            )
+            if (activeSessionState.hasActiveSession) {
+                when {
+                    activeExercisesState.isLoading -> {
+                        DashboardMessageCard(
+                            title = "Loading exercises",
+                            message = "Preparing the list of exercises for your active routine."
+                        )
+                    }
+
+                    activeExercisesState.items.isEmpty() -> {
+                        DashboardMessageCard(
+                            title = "No exercises found",
+                            message = "This routine session does not have seeded exercises yet."
+                        )
+                    }
+
+                    else -> {
+                        ActiveRoutineExercisesSection(
+                            items = activeExercisesState.items,
+                            onSeriesChange = viewModel::actualizarSeriesRealizadas,
+                            onRepsChange = viewModel::actualizarRepeticionesRealizadas,
+                            onWeightChange = viewModel::actualizarPesoRealizado,
+                            onSave = viewModel::guardarEjercicioSesionActiva,
+                            onToggleCompleted = viewModel::actualizarEstadoEjercicioSesionActiva
+                        )
+                    }
+                }
+            } else {
+                DashboardMessageCard(
+                    title = "What comes next",
+                    message = "Start one of your routines and the exercise tracker will appear here."
+                )
+            }
         }
 
         BottomNavBar(
@@ -207,7 +246,10 @@ private fun ActiveRoutineCard(
     title: String,
     category: String,
     date: String,
-    elapsedTime: String
+    elapsedTime: String,
+    completedCount: Int,
+    pendingCount: Int,
+    totalCount: Int
 ) {
     Column(
         modifier = Modifier
@@ -252,11 +294,159 @@ private fun ActiveRoutineCard(
             fontWeight = FontWeight.Bold
         )
         Spacer(Modifier.height(12.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SessionBadge(label = "$completedCount/$totalCount completed")
+            SessionBadge(label = "$pendingCount remaining")
+        }
+        Spacer(Modifier.height(12.dp))
         Text(
-            text = "The exercise tracker and finish action will appear in the next steps.",
+            text = "Register each exercise below and mark it done when you finish it.",
             color = TextSecondary,
             fontSize = 13.sp
         )
+    }
+}
+
+@Composable
+private fun ActiveRoutineExercisesSection(
+    items: List<ActiveRoutineExerciseItemUiState>,
+    onSeriesChange: (Int, String) -> Unit,
+    onRepsChange: (Int, String) -> Unit,
+    onWeightChange: (Int, String) -> Unit,
+    onSave: (Int) -> Unit,
+    onToggleCompleted: (Int, Boolean) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Text(
+            text = "Exercises In Progress",
+            color = TextPrimary,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        items.forEach { item ->
+            ActiveExerciseCard(
+                item = item,
+                onSeriesChange = onSeriesChange,
+                onRepsChange = onRepsChange,
+                onWeightChange = onWeightChange,
+                onSave = onSave,
+                onToggleCompleted = onToggleCompleted
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActiveExerciseCard(
+    item: ActiveRoutineExerciseItemUiState,
+    onSeriesChange: (Int, String) -> Unit,
+    onRepsChange: (Int, String) -> Unit,
+    onWeightChange: (Int, String) -> Unit,
+    onSave: (Int) -> Unit,
+    onToggleCompleted: (Int, Boolean) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(BgCard)
+            .border(1.dp, DividerColor, RoundedCornerShape(18.dp))
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = item.name,
+                    color = TextPrimary,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = buildTargetSummary(item),
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
+            }
+
+            SessionBadge(
+                label = if (item.completado) "DONE" else "PENDING"
+            )
+        }
+
+        Spacer(Modifier.height(14.dp))
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            OutlinedTextField(
+                value = item.pesoRealizadoInput,
+                onValueChange = { onWeightChange(item.historyExerciseId, it) },
+                label = { Text("Weight") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = item.repeticionesRealizadasInput,
+                onValueChange = { onRepsChange(item.historyExerciseId, it) },
+                label = { Text("Reps") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = item.seriesRealizadasInput,
+                onValueChange = { onSeriesChange(item.historyExerciseId, it) },
+                label = { Text("Sets") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        Spacer(Modifier.height(14.dp))
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            OutlinedButton(
+                onClick = { onSave(item.historyExerciseId) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text(
+                    text = "Save",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Button(
+                onClick = { onToggleCompleted(item.historyExerciseId, !item.completado) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (item.completado) BgCardAlt else CyanPrimary,
+                    contentColor = if (item.completado) TextPrimary else BgDeep
+                )
+            ) {
+                Text(
+                    text = if (item.completado) "Completed" else "Mark Done",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
     }
 }
 
@@ -360,6 +550,20 @@ private fun SessionBadge(label: String) {
     }
 }
 
+private fun buildTargetSummary(item: ActiveRoutineExerciseItemUiState): String {
+    val goals = buildList {
+        item.seriesObjetivo?.let { add("$it sets") }
+        item.repeticionesObjetivo?.let { add("$it reps") }
+        item.pesoObjetivo?.let { add("${item.pesoObjetivo.stripTrailingZeros()} kg goal") }
+    }
+
+    return if (goals.isEmpty()) {
+        "No objective configured for this exercise yet."
+    } else {
+        goals.joinToString(" - ")
+    }
+}
+
 @Preview(showBackground = true, backgroundColor = 0xFF080E1A)
 @Composable
 fun DashboardScreenPreview() {
@@ -381,4 +585,12 @@ private fun formatElapsedTime(totalSeconds: Long): String {
     val minutes = (totalSeconds % 3600) / 60
     val seconds = totalSeconds % 60
     return "%02d:%02d:%02d".format(hours, minutes, seconds)
+}
+
+private fun Double.stripTrailingZeros(): String {
+    return if (this % 1.0 == 0.0) {
+        toInt().toString()
+    } else {
+        toString()
+    }
 }
