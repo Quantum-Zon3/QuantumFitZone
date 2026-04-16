@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.qz.quantumfitzone.data.local.repository.DatabaseProvider
 import com.qz.quantumfitzone.data.model.HistorialEntrenamientoEntity
+import com.qz.quantumfitzone.ui.state.ActiveRoutineDashboardUiState
 import com.qz.quantumfitzone.ui.state.RoutineHistoryDetailUiState
 import com.qz.quantumfitzone.ui.state.RoutineHistoryExerciseItem
 import com.qz.quantumfitzone.ui.state.WorkoutHistoryUiState
@@ -28,11 +29,15 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
     private val _rutinaDetalleUiState = MutableStateFlow(RoutineHistoryDetailUiState())
     val rutinaDetalleUiState: StateFlow<RoutineHistoryDetailUiState> = _rutinaDetalleUiState.asStateFlow()
 
+    private val _sesionActivaUiState = MutableStateFlow(ActiveRoutineDashboardUiState())
+    val sesionActivaUiState: StateFlow<ActiveRoutineDashboardUiState> = _sesionActivaUiState.asStateFlow()
+
     private var currentHistoryId: Int? = null
     private var routineDetailJob: Job? = null
 
     init {
         cargarHistorialUsuarioActivo()
+        cargarSesionActivaUsuario()
     }
 
     // SECCION: LISTA DE HISTORIAL
@@ -77,6 +82,44 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
     fun eliminarSesion(historial: HistorialEntrenamientoEntity) {
         viewModelScope.launch {
             historialDao.eliminar(historial)
+        }
+    }
+
+    fun cargarSesionActivaUsuario() {
+        val preferences = getApplication<Application>()
+            .getSharedPreferences("credenciales", Context.MODE_PRIVATE)
+        val correoUsuario = preferences.getString("user", "").orEmpty()
+
+        if (correoUsuario.isBlank()) {
+            _sesionActivaUiState.value = ActiveRoutineDashboardUiState(
+                correoUsuario = "",
+                hasActiveSession = false,
+                isLoading = false
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            historialDao.obtenerSesionActivaPorUsuario(correoUsuario).collectLatest { sesion ->
+                _sesionActivaUiState.value = if (sesion == null) {
+                    ActiveRoutineDashboardUiState(
+                        correoUsuario = correoUsuario,
+                        hasActiveSession = false,
+                        isLoading = false
+                    )
+                } else {
+                    ActiveRoutineDashboardUiState(
+                        correoUsuario = correoUsuario,
+                        hasActiveSession = true,
+                        historyId = sesion.id_historial,
+                        routineTitle = sesion.titulo,
+                        category = sesion.categoria,
+                        date = sesion.fecha,
+                        startedAt = sesion.fecha_inicio,
+                        isLoading = false
+                    )
+                }
+            }
         }
     }
 
