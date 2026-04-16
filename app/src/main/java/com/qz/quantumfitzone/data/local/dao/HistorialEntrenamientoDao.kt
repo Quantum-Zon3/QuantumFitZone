@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface HistorialEntrenamientoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertar(historial: HistorialEntrenamientoEntity)
+    suspend fun insertar(historial: HistorialEntrenamientoEntity): Long
 
     @Query(
         """

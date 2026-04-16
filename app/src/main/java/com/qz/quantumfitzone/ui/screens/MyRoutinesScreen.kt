@@ -75,6 +75,7 @@ fun MyRoutinesScreen(
 ) {
     val routines by viewModel.routines.collectAsStateWithLifecycle(initialValue = emptyList())
     var rutinaAEliminar by remember { mutableStateOf<RutinaEntity?>(null) }
+    val playRoutineError = viewModel.playRoutineError
 
     Box(
         modifier = Modifier
@@ -131,7 +132,11 @@ fun MyRoutinesScreen(
                     RoutineCard(
                         routine = routine.toCardModel(),
                         onEditRoutine = { onEditRoutine(routine.id_rutina) },
-                        onPlayRoutine = { onPlayRoutine(routine.id_rutina) },
+                        onPlayRoutine = {
+                            viewModel.startRoutineSession(routine.id_rutina) {
+                                onPlayRoutine(routine.id_rutina)
+                            }
+                        },
                         onDeleteRoutine = { rutinaAEliminar = routine }
                     )
                     Spacer(Modifier.height(16.dp))
@@ -218,6 +223,31 @@ fun MyRoutinesScreen(
             dismissButton = {
                 TextButton(onClick = { rutinaAEliminar = null }) {
                     Text("Cancelar", color = TextSecondary)
+                }
+            }
+        )
+    }
+
+    playRoutineError?.let { error ->
+        AlertDialog(
+            onDismissRequest = viewModel::dismissPlayRoutineError,
+            containerColor = BgCard,
+            title = {
+                Text(
+                    text = "No pudimos iniciar la rutina",
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = error,
+                    color = TextSecondary
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissPlayRoutineError) {
+                    Text("Entendido", color = CyanPrimary)
                 }
             }
         )
