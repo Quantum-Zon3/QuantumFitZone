@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface RutinaDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertar(rutina: RutinaEntity)
+    suspend fun insertar(rutina: RutinaEntity): Long
 
     @Query("SELECT * FROM rutinas")
     fun obtenerTodas(): Flow<List<RutinaEntity>>

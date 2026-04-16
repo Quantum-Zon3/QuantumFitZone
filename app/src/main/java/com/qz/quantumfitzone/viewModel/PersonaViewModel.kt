@@ -292,7 +292,6 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
             return
         }
     }
-}
     /*
     fun admin() {
         var personaAdmin by mutableStateOf(PersonaEntity())
