@@ -33,8 +33,8 @@ sealed class Screen(val route: String) {
         fun createRoute(historyId: Int) = "RoutineHistoryDetail/$historyId"
     }
 
-    object ExerciseHistoryDetail : Screen("ExerciseHistoryDetail/{exerciseId}") {
-        fun createRoute(exerciseId: Int) = "ExerciseHistoryDetail/$exerciseId"
+    object ExerciseHistoryDetail : Screen("ExerciseHistoryDetail/{historyExerciseId}") {
+        fun createRoute(historyExerciseId: Int) = "ExerciseHistoryDetail/$historyExerciseId"
     }
 
     object MachinesAdmin : Screen("MachinesAdmin")

@@ -135,7 +135,7 @@ fun RoutineHistoryDetailScreen(
                         uiState.exercises.forEach { exercise ->
                             ExerciseHistoryRow(
                                 exercise = exercise,
-                                onClick = { onOpenExercise(exercise.exerciseId) }
+                                onClick = { onOpenExercise(exercise.historyExerciseId) }
                             )
                             Spacer(Modifier.height(10.dp))
                         }

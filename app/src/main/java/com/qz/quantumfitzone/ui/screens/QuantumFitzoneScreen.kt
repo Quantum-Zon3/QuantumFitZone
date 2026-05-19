@@ -58,7 +58,7 @@ fun QuantumFitzoneScreen(
             onClickDashboardUsuario = { onDashboard() },
             onClickDashboardAdmin = { onDashboardAdmin() }
         )
-        //viewModel.admin()
+        viewModel.admin()
     }
 
     Box(

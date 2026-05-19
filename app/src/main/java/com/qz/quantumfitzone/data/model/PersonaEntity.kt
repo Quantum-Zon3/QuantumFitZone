@@ -15,5 +15,6 @@ data class PersonaEntity(
     val estatura: Float = 0f,
     val imc: Float = 0f,
     val estado: Boolean = true,
+    val fotoPerfilUri: String? = null,
     val resultado: String = "",
     )

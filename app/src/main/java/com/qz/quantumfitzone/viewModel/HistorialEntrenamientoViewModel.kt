@@ -26,7 +26,7 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
     private val database = DatabaseProvider.getDatabase(application)
     private val historialDao = database.historialEntrenamientoDao()
     private val historialEjercicioDao = database.historialEjercicioDao()
-    private val ejercicioDao = database.ejercicioDao()
+    private val exerciseCatalogDao = database.exerciseCatalogDao()
     private val maquinaDao = database.maquinaDao()
 
     private val _uiState = MutableStateFlow(WorkoutHistoryUiState())
@@ -216,19 +216,21 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
                 return@launch
             }
 
-            ejercicioDao.obtenerPorRutinaYFecha(session.id_rutina, session.fecha).collectLatest { ejercicios ->
+            historialEjercicioDao.obtenerPorHistorial(historyId).collectLatest { ejercicios ->
                 val mapped = ejercicios.map { ejercicio ->
-                    val maquina = maquinaDao.obtenerPorId(ejercicio.id_maquina)
+                    val catalogExercise = exerciseCatalogDao.obtenerPorId(ejercicio.id_exercise)
+                    val maquina = catalogExercise?.id_maquina?.let { maquinaDao.obtenerPorId(it) }
                     RoutineHistoryExerciseItem(
-                        exerciseId = ejercicio.id_ejercicio,
-                        machineId = ejercicio.id_maquina,
-                        machineName = maquina?.nombre ?: "Machine ${ejercicio.id_maquina}",
-                        weight = ejercicio.peso,
-                        reps = ejercicio.repeticiones,
-                        sets = ejercicio.series,
-                        targetWeight = ejercicio.objetivo_peso,
-                        targetReps = ejercicio.objetivo_repeticiones,
-                        targetSets = ejercicio.objetivo_series
+                        historyExerciseId = ejercicio.id_historial_ejercicio,
+                        exerciseId = ejercicio.id_exercise,
+                        machineId = catalogExercise?.id_maquina,
+                        machineName = maquina?.nombre ?: ejercicio.nombre_ejercicio,
+                        weight = ejercicio.peso_realizado,
+                        reps = ejercicio.repeticiones_realizadas,
+                        sets = ejercicio.series_realizadas,
+                        targetWeight = ejercicio.peso_objetivo,
+                        targetReps = ejercicio.repeticiones_objetivo,
+                        targetSets = ejercicio.series_objetivo
                     )
                 }
 

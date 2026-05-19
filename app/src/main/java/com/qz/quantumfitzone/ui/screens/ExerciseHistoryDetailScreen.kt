@@ -33,15 +33,15 @@ import com.qz.quantumfitzone.viewModel.EjercicioViewModel
 
 @Composable
 fun ExerciseHistoryDetailScreen(
-    exerciseId: Int,
+    historyExerciseId: Int,
     onNavigateBack: () -> Unit = {},
     onOpenProgress: (Int) -> Unit = {},
     viewModel: EjercicioViewModel = viewModel()
 ) {
     val uiState = viewModel.detalleUiState.collectAsStateWithLifecycle().value
 
-    LaunchedEffect(exerciseId) {
-        viewModel.loadDetalle(exerciseId)
+    LaunchedEffect(historyExerciseId) {
+        viewModel.loadDetalle(historyExerciseId)
     }
 
     Box(
@@ -266,5 +266,5 @@ private fun ProgressActionCard(onClick: () -> Unit) {
 @Preview(showBackground = true, backgroundColor = 0xFF080E1A)
 @Composable
 private fun ExerciseHistoryDetailPreview() {
-    ExerciseHistoryDetailScreen(exerciseId = 1)
+    ExerciseHistoryDetailScreen(historyExerciseId = 1)
 }

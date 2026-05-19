@@ -1,6 +1,13 @@
 package com.qz.quantumfitzone.ui.screens
 
+import android.Manifest
+import android.content.ContentValues
 import android.content.Context
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.MediaStore
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.EaseInOutSine
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -31,10 +38,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
@@ -46,6 +55,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,12 +65,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.qz.quantumfitzone.viewModel.PersonaViewModel
 
 private val BgDeep = Color(0xFF080E1A)
@@ -85,6 +100,45 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val accountEditorState = viewModel.accountEditorState
+    var showPhotoOptions by remember { mutableStateOf(false) }
+    var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { selectedUri ->
+        selectedUri?.let { uri ->
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+            viewModel.updateOwnProfilePhoto(uri.toString())
+        }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            pendingCameraUri?.let { uri ->
+                viewModel.updateOwnProfilePhoto(uri.toString())
+            }
+        }
+        pendingCameraUri = null
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            val cameraUri = createProfileImageUri(context)
+            pendingCameraUri = cameraUri
+            if (cameraUri != null) {
+                cameraLauncher.launch(cameraUri)
+            }
+        }
+    }
 
     val glowAnim = rememberInfiniteTransition(label = "glow")
     val glowAlpha by glowAnim.animateFloat(
@@ -203,6 +257,86 @@ fun ProfileScreen(
         )
     }
 
+    if (showPhotoOptions) {
+        AlertDialog(
+            onDismissRequest = { showPhotoOptions = false },
+            title = {
+                Text(
+                    text = "Profile Photo",
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Button(
+                        onClick = {
+                            showPhotoOptions = false
+                            if (
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.CAMERA
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                val cameraUri = createProfileImageUri(context)
+                                pendingCameraUri = cameraUri
+                                if (cameraUri != null) {
+                                    cameraLauncher.launch(cameraUri)
+                                }
+                            } else {
+                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = null
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Take Photo")
+                    }
+
+                    Button(
+                        onClick = {
+                            showPhotoOptions = false
+                            galleryLauncher.launch(arrayOf("image/*"))
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhotoLibrary,
+                            contentDescription = null
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Choose from Device")
+                    }
+
+                    if (!uiState.avatarUrl.isNullOrBlank()) {
+                        TextButton(
+                            onClick = {
+                                showPhotoOptions = false
+                                viewModel.updateOwnProfilePhoto(null)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Remove Current Photo")
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showPhotoOptions = false }) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = BgCard,
+            titleContentColor = TextPrimary,
+            textContentColor = TextSecondary
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -281,12 +415,23 @@ fun ProfileScreen(
                             .background(BgCard),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Avatar",
-                            tint = CyanDim,
-                            modifier = Modifier.size(52.dp)
-                        )
+                        if (!uiState.avatarUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = uiState.avatarUrl,
+                                contentDescription = "Profile photo",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Avatar",
+                                tint = CyanDim,
+                                modifier = Modifier.size(52.dp)
+                            )
+                        }
                     }
                     Box(
                         modifier = Modifier
@@ -302,6 +447,22 @@ fun ProfileScreen(
                             contentDescription = "Verified",
                             tint = BgDeep,
                             modifier = Modifier.size(13.dp)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(CyanPrimary)
+                            .clickable { showPhotoOptions = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Change photo",
+                            tint = BgDeep,
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                 }
@@ -568,4 +729,17 @@ private fun SettingsRow(
 @Composable
 fun ProfileScreenPreview() {
     ProfileScreen()
+}
+
+private fun createProfileImageUri(context: Context): Uri? {
+    val values = ContentValues().apply {
+        put(MediaStore.Images.Media.DISPLAY_NAME, "profile_${System.currentTimeMillis()}.jpg")
+        put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/QuantumFitZone")
+    }
+
+    return context.contentResolver.insert(
+        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        values
+    )
 }

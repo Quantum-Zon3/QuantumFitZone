@@ -193,11 +193,11 @@ fun NavGraph() {
 
         composable(
             route = Screen.ExerciseHistoryDetail.route,
-            arguments = listOf(navArgument("exerciseId") { type = NavType.IntType })
+            arguments = listOf(navArgument("historyExerciseId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val exerciseId = backStackEntry.arguments?.getInt("exerciseId") ?: return@composable
+            val historyExerciseId = backStackEntry.arguments?.getInt("historyExerciseId") ?: return@composable
             ExerciseHistoryDetailScreen(
-                exerciseId = exerciseId,
+                historyExerciseId = historyExerciseId,
                 onNavigateBack = { navController.popBackStack() },
                 onOpenProgress = { selectedExerciseId ->
                     navController.navigate(Screen.Progress.createRoute(selectedExerciseId))

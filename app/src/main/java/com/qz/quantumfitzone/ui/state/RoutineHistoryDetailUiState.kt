@@ -1,8 +1,9 @@
 package com.qz.quantumfitzone.ui.state
 
 data class RoutineHistoryExerciseItem(
+    val historyExerciseId: Int,
     val exerciseId: Int,
-    val machineId: Int,
+    val machineId: Int?,
     val machineName: String,
     val weight: Double?,
     val reps: Int?,

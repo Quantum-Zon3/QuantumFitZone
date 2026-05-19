@@ -343,6 +343,7 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
                     workouts = workouts,
                     streakDays = streak,
                     rank = calcularRango(workouts, streak),
+                    avatarUrl = persona?.fotoPerfilUri,
                     isLoading = false
                 )
             }
@@ -448,6 +449,19 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun updateOwnProfilePhoto(photoUri: String?) {
+        val correoUsuario = obtenerCorreoUsuarioActivo()
+        if (correoUsuario.isBlank()) return
+
+        viewModelScope.launch {
+            val persona = personaDao.obtenerPorCorreo(correoUsuario) ?: return@launch
+            val personaActualizada = persona.copy(fotoPerfilUri = photoUri)
+            personaDao.actualizar(personaActualizada)
+            personaActual = personaActualizada
+            _uiState.value = _uiState.value.copy(avatarUrl = photoUri)
+        }
+    }
+
     // SECCION: ELIMINACION DE CUENTA Y SESION
 
     fun requestDeleteCurrentAccount() {
@@ -547,4 +561,21 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
         preferences.edit().clear().apply()
     }
+
+fun admin() {
+    var personaAdmin by mutableStateOf(PersonaEntity())
+    personaAdmin = personaAdmin.copy(
+        nombre = "Carlitos",
+        rol = "admin",
+        correo = "carlitos@fitness.com",
+        estado = true,
+        peso = 70f,
+        estatura = 1.70f,
+        imc = 70f/1.70f,
+        password = "Soy123"
+        )
+    println("PersonaAdmin: $personaAdmin")
+    insertar(personaAdmin)
+}
+
 }
