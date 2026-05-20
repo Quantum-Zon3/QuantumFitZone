@@ -1,11 +1,14 @@
 package com.qz.quantumfitzone.viewModel
 
 import android.app.Application
-import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.qz.quantumfitzone.data.local.repository.DatabaseProvider
 import com.qz.quantumfitzone.data.model.HistorialEntrenamientoEntity
+import com.qz.quantumfitzone.data.remote.ApiClient
+import com.qz.quantumfitzone.data.remote.SessionManager
+import com.qz.quantumfitzone.data.remote.model.toDto
+import com.qz.quantumfitzone.data.remote.model.toEntity
 import com.qz.quantumfitzone.ui.state.ActiveRoutineDashboardUiState
 import com.qz.quantumfitzone.ui.state.ActiveRoutineExerciseItemUiState
 import com.qz.quantumfitzone.ui.state.ActiveRoutineExercisesUiState
@@ -26,8 +29,9 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
     private val database = DatabaseProvider.getDatabase(application)
     private val historialDao = database.historialEntrenamientoDao()
     private val historialEjercicioDao = database.historialEjercicioDao()
-    private val ejercicioDao = database.ejercicioDao()
-    private val maquinaDao = database.maquinaDao()
+    private val sessionManager = SessionManager(application)
+    private val historialEntrenamientoApi = ApiClient.createHistorialEntrenamientoApi(sessionManager)
+    private val historialEjercicioApi = ApiClient.createHistorialEjercicioApi(sessionManager)
 
     private val _uiState = MutableStateFlow(WorkoutHistoryUiState())
     val uiState: StateFlow<WorkoutHistoryUiState> = _uiState.asStateFlow()
@@ -47,6 +51,7 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
     private var activeSessionExercisesJob: Job? = null
 
     init {
+        sincronizarHistorialUsuarioActivo()
         cargarHistorialUsuarioActivo()
         cargarSesionActivaUsuario()
     }
@@ -54,9 +59,7 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
     // SECCION: LISTA DE HISTORIAL
 
     fun cargarHistorialUsuarioActivo() {
-        val preferences = getApplication<Application>()
-            .getSharedPreferences("credenciales", Context.MODE_PRIVATE)
-        val correoUsuario = preferences.getString("user", "").orEmpty()
+        val correoUsuario = sessionManager.getUser()
 
         if (correoUsuario.isBlank()) {
             _uiState.value = WorkoutHistoryUiState(
@@ -80,26 +83,31 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
 
     fun insertarSesion(historial: HistorialEntrenamientoEntity) {
         viewModelScope.launch {
-            historialDao.insertar(historial)
+            val guardado = runCatching {
+                historialEntrenamientoApi.crearHistorialEntrenamiento(historial.toDto()).toEntity()
+            }.getOrNull() ?: historial
+            guardarHistorialLocal(guardado)
         }
     }
 
     fun actualizarSesion(historial: HistorialEntrenamientoEntity) {
         viewModelScope.launch {
-            historialDao.actualizar(historial)
+            val actualizada = runCatching {
+                historialEntrenamientoApi.actualizarHistorialEntrenamiento(historial.id_historial, historial.toDto()).toEntity()
+            }.getOrNull() ?: historial
+            historialDao.actualizar(actualizada)
         }
     }
 
     fun eliminarSesion(historial: HistorialEntrenamientoEntity) {
         viewModelScope.launch {
+            runCatching { historialEntrenamientoApi.eliminarHistorialEntrenamiento(historial.id_historial) }
             historialDao.eliminar(historial)
         }
     }
 
     fun cargarSesionActivaUsuario() {
-        val preferences = getApplication<Application>()
-            .getSharedPreferences("credenciales", Context.MODE_PRIVATE)
-        val correoUsuario = preferences.getString("user", "").orEmpty()
+        val correoUsuario = sessionManager.getUser()
 
         if (correoUsuario.isBlank()) {
             _sesionActivaUiState.value = ActiveRoutineDashboardUiState(
@@ -186,15 +194,17 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
                 Duration.between(it, endDateTime).seconds.coerceAtLeast(0).toInt()
             } ?: 0
 
-            historialDao.actualizar(
-                historial.copy(
-                    fecha_fin = endDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                    duracion_segundos = elapsedSeconds,
-                    duracion_minutos = (elapsedSeconds / 60).coerceAtLeast(0),
-                    en_progreso = false,
-                    completado = true
-                )
+            val actualizado = historial.copy(
+                fecha_fin = endDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                duracion_segundos = elapsedSeconds,
+                duracion_minutos = (elapsedSeconds / 60).coerceAtLeast(0),
+                en_progreso = false,
+                completado = true
             )
+            runCatching {
+                historialEntrenamientoApi.actualizarHistorialEntrenamiento(actualizado.id_historial, actualizado.toDto())
+            }
+            historialDao.actualizar(actualizado)
         }
     }
 
@@ -216,19 +226,18 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
                 return@launch
             }
 
-            ejercicioDao.obtenerPorRutinaYFecha(session.id_rutina, session.fecha).collectLatest { ejercicios ->
+            historialEjercicioDao.obtenerPorHistorial(historyId).collectLatest { ejercicios ->
                 val mapped = ejercicios.map { ejercicio ->
-                    val maquina = maquinaDao.obtenerPorId(ejercicio.id_maquina)
                     RoutineHistoryExerciseItem(
-                        exerciseId = ejercicio.id_ejercicio,
-                        machineId = ejercicio.id_maquina,
-                        machineName = maquina?.nombre ?: "Machine ${ejercicio.id_maquina}",
-                        weight = ejercicio.peso,
-                        reps = ejercicio.repeticiones,
-                        sets = ejercicio.series,
-                        targetWeight = ejercicio.objetivo_peso,
-                        targetReps = ejercicio.objetivo_repeticiones,
-                        targetSets = ejercicio.objetivo_series
+                        exerciseId = ejercicio.id_exercise,
+                        machineId = 0,
+                        machineName = ejercicio.nombre_ejercicio,
+                        weight = ejercicio.peso_realizado,
+                        reps = ejercicio.repeticiones_realizadas,
+                        sets = ejercicio.series_realizadas,
+                        targetWeight = ejercicio.peso_objetivo,
+                        targetReps = ejercicio.repeticiones_objetivo,
+                        targetSets = ejercicio.series_objetivo
                     )
                 }
 
@@ -305,14 +314,16 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
 
         viewModelScope.launch {
             val ejercicio = historialEjercicioDao.obtenerPorId(historyExerciseId) ?: return@launch
-            historialEjercicioDao.actualizar(
-                ejercicio.copy(
-                    series_realizadas = item.seriesRealizadasInput.toIntOrNull(),
-                    repeticiones_realizadas = item.repeticionesRealizadasInput.toIntOrNull(),
-                    peso_realizado = item.pesoRealizadoInput.toNormalizedDoubleOrNull(),
-                    completado = markAsCompleted ?: item.completado
-                )
+            val actualizado = ejercicio.copy(
+                series_realizadas = item.seriesRealizadasInput.toIntOrNull(),
+                repeticiones_realizadas = item.repeticionesRealizadasInput.toIntOrNull(),
+                peso_realizado = item.pesoRealizadoInput.toNormalizedDoubleOrNull(),
+                completado = markAsCompleted ?: item.completado
             )
+            runCatching {
+                historialEjercicioApi.actualizarHistorialEjercicio(actualizado.id_historial_ejercicio, actualizado.toDto())
+            }
+            historialEjercicioDao.actualizar(actualizado)
         }
     }
 
@@ -356,5 +367,44 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
         return runCatching {
             LocalDateTime.parse(this, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         }.getOrNull()
+    }
+
+    private fun sincronizarHistorialUsuarioActivo() {
+        val correoUsuario = sessionManager.getUser()
+        if (correoUsuario.isBlank()) return
+
+        viewModelScope.launch {
+            val sesiones = runCatching {
+                historialEntrenamientoApi.obtenerHistorialEntrenamientosPorUsuario(correoUsuario)
+            }.getOrNull() ?: return@launch
+
+            historialEjercicioDao.eliminarTodos()
+            historialDao.eliminarTodos()
+
+            sesiones.forEach { sessionDto ->
+                val session = guardarHistorialLocal(sessionDto.toEntity())
+                val ejercicios = runCatching {
+                    historialEjercicioApi.obtenerHistorialEjerciciosPorHistorial(session.id_historial)
+                }.getOrNull().orEmpty()
+                ejercicios.forEach { ejercicioDto ->
+                    val ejercicio = ejercicioDto.toEntity().copy(
+                        id_historial = session.id_historial
+                    )
+                    historialEjercicioDao.insertar(ejercicio)
+                }
+            }
+        }
+    }
+
+    private suspend fun guardarHistorialLocal(
+        historial: HistorialEntrenamientoEntity
+    ): HistorialEntrenamientoEntity {
+        if (historial.id_historial > 0) {
+            historialDao.insertar(historial)
+            return historial
+        }
+
+        val localId = historialDao.insertar(historial.copy(id_historial = 0)).toInt()
+        return historial.copy(id_historial = localId)
     }
 }

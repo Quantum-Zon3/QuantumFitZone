@@ -1,25 +1,12 @@
 package com.qz.quantumfitzone.data.model
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "ejercicios",
-    foreignKeys = [
-        ForeignKey(
-            entity = RutinaEntity::class,
-            parentColumns = ["id_rutina"],
-            childColumns = ["id_rutina"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = MaquinaEntity::class,
-            parentColumns = ["id_maquina"],
-            childColumns = ["id_maquina"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
+    indices = [Index("id_rutina"), Index("id_maquina")]
 )
 data class EjercicioEntity(
     @PrimaryKey(autoGenerate = true)

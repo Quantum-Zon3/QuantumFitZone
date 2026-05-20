@@ -1,5 +1,6 @@
 package com.qz.quantumfitzone.ui.screens
 
+import android.content.Context
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -10,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,10 +22,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.qz.quantumfitzone.viewModel.PersonaViewModel
 
 // ── Colores (misma paleta que SupportScreen) ─────────────────────────────────
 private val BgDeep        = Color(0xFF080E1A)
@@ -34,6 +39,9 @@ private val CyanSoft      = Color(0x1A00D4FF)
 private val TextPrimary   = Color(0xFFE8F4FF)
 private val TextSecondary = Color(0xFF6B8FAB)
 private val DividerColor  = Color(0xFF1A2F45)
+
+private val RedSignOut = Color(0xFFFF3B5C)
+
 private val GreenPositive = Color(0xFF00E676)
 private val CardBorder    = Color(0xFF132030)
 
@@ -50,7 +58,10 @@ private val chartPoints = listOf(
 // ── Screen ────────────────────────────────────────────────────────────────────
 @Composable
 fun DashboardScreenAdmin(
-    onNavigate: (BottomNavDestination) -> Unit = {}
+    context: Context = LocalContext.current,
+    onNavigate: (BottomNavDestination) -> Unit = {},
+    onSignOut: () -> Unit = {},
+    viewModel: PersonaViewModel = viewModel()
 ) {
     Box(
         modifier = Modifier
@@ -78,14 +89,18 @@ fun DashboardScreenAdmin(
                         .size(40.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .background(BgCard)
-                        .clickable { },
+                        .clickable {
+                            viewModel.signOut(context) {
+                                onSignOut()
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector        = Icons.Default.Menu,
-                        contentDescription = "Menu",
-                        tint               = CyanPrimary,
-                        modifier           = Modifier.size(20.dp)
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = "Sign Out",
+                        tint = RedSignOut,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
 

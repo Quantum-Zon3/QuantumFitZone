@@ -5,6 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.qz.quantumfitzone.data.local.repository.DatabaseProvider
 import com.qz.quantumfitzone.data.model.EjercicioEntity
+import com.qz.quantumfitzone.data.remote.ApiClient
+import com.qz.quantumfitzone.data.remote.SessionManager
+import com.qz.quantumfitzone.data.remote.model.toDto
+import com.qz.quantumfitzone.data.remote.model.toEntity
 import com.qz.quantumfitzone.ui.state.ExerciseHistoryDetailUiState
 import com.qz.quantumfitzone.ui.state.ExerciseProgressUiState
 import com.qz.quantumfitzone.ui.state.ProgressHistoryPoint
@@ -23,6 +27,7 @@ class EjercicioViewModel(application: Application) : AndroidViewModel(applicatio
     private val database = DatabaseProvider.getDatabase(application)
     private val ejercicioDao = database.ejercicioDao()
     private val maquinaDao = database.maquinaDao()
+    private val ejercicioApi = ApiClient.createEjercicioApi(SessionManager(application))
 
     private val _detalleUiState = MutableStateFlow(ExerciseHistoryDetailUiState())
     val detalleUiState: StateFlow<ExerciseHistoryDetailUiState> = _detalleUiState.asStateFlow()
@@ -34,6 +39,35 @@ class EjercicioViewModel(application: Application) : AndroidViewModel(applicatio
     private var currentExerciseProgressId: Int? = null
     private var progressJob: Job? = null
 
+    init {
+        sincronizarEjercicios()
+    }
+
+    fun insertar(ejercicio: EjercicioEntity) {
+        viewModelScope.launch {
+            val guardado = runCatching {
+                ejercicioApi.crearEjercicio(ejercicio.toDto()).toEntity()
+            }.getOrNull() ?: ejercicio
+            ejercicioDao.insertar(guardado)
+        }
+    }
+
+    fun actualizar(ejercicio: EjercicioEntity) {
+        viewModelScope.launch {
+            val actualizado = runCatching {
+                ejercicioApi.actualizarEjercicio(ejercicio.id_ejercicio, ejercicio.toDto()).toEntity()
+            }.getOrNull() ?: ejercicio
+            ejercicioDao.actualizar(actualizado)
+        }
+    }
+
+    fun eliminar(ejercicio: EjercicioEntity) {
+        viewModelScope.launch {
+            runCatching { ejercicioApi.eliminarEjercicio(ejercicio.id_ejercicio) }
+            ejercicioDao.eliminar(ejercicio)
+        }
+    }
+
     // SECCION: DETALLE DE EJERCICIO
 
     fun loadDetalle(exerciseId: Int) {
@@ -42,7 +76,7 @@ class EjercicioViewModel(application: Application) : AndroidViewModel(applicatio
         _detalleUiState.value = ExerciseHistoryDetailUiState(isLoading = true)
 
         viewModelScope.launch {
-            val exercise = ejercicioDao.obtenerPorId(exerciseId)
+            val exercise = obtenerEjercicioConServidor(exerciseId)
             if (exercise == null) {
                 _detalleUiState.value = ExerciseHistoryDetailUiState(
                     isLoading = false,
@@ -87,7 +121,7 @@ class EjercicioViewModel(application: Application) : AndroidViewModel(applicatio
         _progresoUiState.value = ExerciseProgressUiState(isLoading = true)
 
         progressJob = viewModelScope.launch {
-            val exercise = ejercicioDao.obtenerPorId(exerciseId)
+            val exercise = obtenerEjercicioConServidor(exerciseId)
             if (exercise == null) {
                 _progresoUiState.value = ExerciseProgressUiState(
                     isLoading = false,
@@ -159,5 +193,21 @@ class EjercicioViewModel(application: Application) : AndroidViewModel(applicatio
 
     private fun formatShortDate(date: LocalDate): String {
         return "${date.monthValue}/${date.dayOfMonth}"
+    }
+
+    private suspend fun obtenerEjercicioConServidor(exerciseId: Int): EjercicioEntity? {
+        return runCatching {
+            ejercicioApi.obtenerEjercicio(exerciseId).toEntity()
+        }.onSuccess { ejercicio ->
+            ejercicioDao.insertar(ejercicio)
+        }.getOrNull() ?: ejercicioDao.obtenerPorId(exerciseId)
+    }
+
+    private fun sincronizarEjercicios() {
+        viewModelScope.launch {
+            val remotos = runCatching { ejercicioApi.obtenerEjercicios() }.getOrNull() ?: return@launch
+            ejercicioDao.eliminarTodos()
+            remotos.forEach { ejercicioDao.insertar(it.toEntity()) }
+        }
     }
 }

@@ -34,4 +34,7 @@ interface EjercicioDao {
 
     @Delete
     suspend fun eliminar(ejercicio: EjercicioEntity)
+
+    @Query("DELETE FROM ejercicios")
+    suspend fun eliminarTodos()
 }

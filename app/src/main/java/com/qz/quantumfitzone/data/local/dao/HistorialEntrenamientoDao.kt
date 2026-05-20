@@ -51,4 +51,7 @@ interface HistorialEntrenamientoDao {
 
     @Delete
     suspend fun eliminar(historial: HistorialEntrenamientoEntity)
+
+    @Query("DELETE FROM historial_entrenamientos")
+    suspend fun eliminarTodos()
 }
