@@ -28,4 +28,7 @@ interface RutinaDao {
 
     @Delete
     suspend fun eliminar(rutina: RutinaEntity)
+
+    @Query("DELETE FROM rutinas")
+    suspend fun eliminarTodas()
 }

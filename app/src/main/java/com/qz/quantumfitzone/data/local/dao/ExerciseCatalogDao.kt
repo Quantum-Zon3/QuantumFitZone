@@ -25,4 +25,7 @@ interface ExerciseCatalogDao {
 
     @Delete
     suspend fun eliminar(ejercicio: ExerciseCatalogEntity)
+
+    @Query("DELETE FROM exercise_catalog")
+    suspend fun eliminarTodos()
 }

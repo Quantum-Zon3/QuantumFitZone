@@ -11,6 +11,9 @@ import com.qz.quantumfitzone.clases.PersonaEditorState
 import com.qz.quantumfitzone.data.local.repository.DatabaseProvider
 import com.qz.quantumfitzone.data.model.HistorialEntrenamientoEntity
 import com.qz.quantumfitzone.data.model.PersonaEntity
+import com.qz.quantumfitzone.data.remote.ApiClient
+import com.qz.quantumfitzone.data.remote.SessionManager
+import com.qz.quantumfitzone.data.remote.model.LoginBody
 import com.qz.quantumfitzone.ui.state.AccountEditorUiState
 import com.qz.quantumfitzone.ui.state.UserProfileUiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +28,8 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
     private val database = DatabaseProvider.getDatabase(application)
     private val personaDao = database.personaDao()
     private val historialDao = database.historialEntrenamientoDao()
+    private val sessionManager = SessionManager(application)
+    private val personaApi = ApiClient.createPersonaApi(sessionManager)
 
     val listaPersonas = personaDao.obtenerTodas()
 
@@ -53,33 +58,50 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         private set
 
     init {
+        sincronizarPersonas()
         cargarPerfilUsuarioActivo()
     }
 
     // SECCION: CRUD DE PERSONAS
 
-    suspend fun obtenerTodos(): List<PersonaEntity> = personaDao.obtenerTodos()
+    suspend fun obtenerTodos(): List<PersonaEntity> {
+        val remotas = runCatching { personaApi.obtenerPersonas() }.getOrNull()
+        if (remotas != null) {
+            reemplazarPersonasLocales(remotas)
+            return remotas
+        }
+        return personaDao.obtenerTodos()
+    }
 
     fun obtenerPorCorreo(correo: String, onResult: (PersonaEntity?) -> Unit) {
         viewModelScope.launch {
-            onResult(personaDao.obtenerPorCorreo(correo))
+            val persona = runCatching { personaApi.obtenerPersona(correo) }
+                .onSuccess { guardarPersonaLocal(it) }
+                .getOrNull()
+                ?: personaDao.obtenerPorCorreo(correo)
+            onResult(persona)
         }
     }
 
     fun insertar(persona: PersonaEntity) {
         viewModelScope.launch {
-            personaDao.insertar(persona)
+            val personaGuardada = runCatching { personaApi.registrar(persona) }.getOrNull() ?: persona
+            guardarPersonaLocal(personaGuardada)
         }
     }
 
     fun actualizar(persona: PersonaEntity) {
         viewModelScope.launch {
-            personaDao.actualizar(persona)
+            val personaActualizada = runCatching {
+                personaApi.actualizarPersona(persona.correo, persona)
+            }.getOrNull() ?: persona
+            guardarPersonaLocal(personaActualizada)
         }
     }
 
     fun eliminar(persona: PersonaEntity) {
         viewModelScope.launch {
+            runCatching { personaApi.eliminarPersona(persona.correo) }
             personaDao.eliminar(persona)
         }
     }
@@ -230,18 +252,30 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         }
 
         calcularImc(personaEntity.peso, personaEntity.estatura)
-        insertar(personaEntity)
-        personaEntity = personaEntity.copy(
-            resultado = """
-            DATOS REGISTRADOS:
-            Nombre: ${personaEntity.nombre}
-            Correo: ${personaEntity.correo}
-            Contrasena: ${personaEntity.password}
-            Peso: ${personaEntity.peso}
-            Estatura: ${personaEntity.estatura}
-            """.trimIndent()
-        )
-        onClick()
+        viewModelScope.launch {
+            val personaRegistrada = runCatching {
+                personaApi.registrar(personaEntity)
+            }.onSuccess {
+                guardarPersonaLocal(it)
+            }.getOrElse {
+                personaEntity = personaEntity.copy(
+                    resultado = "No fue posible registrar el usuario en el servidor."
+                )
+                return@launch
+            }
+
+            personaEntity = personaRegistrada.copy(
+                resultado = """
+                DATOS REGISTRADOS:
+                Nombre: ${personaRegistrada.nombre}
+                Correo: ${personaRegistrada.correo}
+                Contrasena: ${personaRegistrada.password}
+                Peso: ${personaRegistrada.peso}
+                Estatura: ${personaRegistrada.estatura}
+                """.trimIndent()
+            )
+            onClick()
+        }
     }
 
     fun login(
@@ -257,18 +291,33 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         }
 
         viewModelScope.launch {
-            val personaEncontrada = personaDao.obtenerTodos().find {
-                it.correo == personaEntity.correo && it.password == personaEntity.password
-            }
+            val authResponse = runCatching {
+                personaApi.login(
+                    LoginBody(
+                        correo = personaEntity.correo,
+                        password = personaEntity.password
+                    )
+                )
+            }.getOrNull()
+
+            val personaEncontrada = authResponse?.persona
 
             if (personaEncontrada == null) {
                 personaEntity = personaEntity.copy(
-                    resultado = "Correo electronico o contrasena incorrectos."
+                    resultado = "No fue posible iniciar sesion con el servidor."
                 )
                 return@launch
             }
 
-            guardarDatos(context, personaEncontrada.correo, personaEncontrada.password)
+            guardarPersonaLocal(personaEncontrada)
+            guardarDatos(
+                context = context,
+                usuario = personaEncontrada.correo,
+                pass = personaEntity.password,
+                accessToken = authResponse.accessToken,
+                refreshToken = authResponse.refreshToken
+            )
+            personaActual = personaEncontrada
             cargarPerfilUsuarioActivo()
 
             if (personaEncontrada.rol == "admin") {
@@ -279,12 +328,14 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun guardarDatos(context: Context, usuario: String, pass: String) {
-        val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
-        preferences.edit()
-            .putString("user", usuario)
-            .putString("pass", pass)
-            .apply()
+    fun guardarDatos(
+        context: Context,
+        usuario: String,
+        pass: String,
+        accessToken: String = sessionManager.getAccessToken(),
+        refreshToken: String = sessionManager.getRefreshToken()
+    ) {
+        SessionManager(context).saveSession(usuario, pass, accessToken, refreshToken)
     }
 
     fun cargarDatos(
@@ -292,13 +343,16 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         onClickDashboardUsuario: () -> Unit,
         onClickDashboardAdmin: () -> Unit
     ) {
-        val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
-        val usuario = preferences.getString("user", "")
-        val pass = preferences.getString("pass", "")
+        val usuario = SessionManager(context).getUser()
+        val pass = SessionManager(context).getPassword()
 
-        if (!usuario.isNullOrEmpty() && !pass.isNullOrEmpty()) {
+        if (usuario.isNotEmpty() && pass.isNotEmpty()) {
             viewModelScope.launch {
-                val persona = personaDao.obtenerPorCorreo(usuario)
+                val persona = runCatching { personaApi.obtenerPersona(usuario) }
+                    .onSuccess { guardarPersonaLocal(it) }
+                    .getOrNull()
+                    ?: personaDao.obtenerPorCorreo(usuario)
+
                 if (persona != null && persona.password == pass) {
                     personaActual = persona
                     cargarPerfilUsuarioActivo()
@@ -311,6 +365,23 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
+
+    //ADMIN CREADO
+    /*fun admin() {
+        var personaAdmin by mutableStateOf(PersonaEntity())
+        personaAdmin = personaAdmin.copy(
+            nombre = "Carlitos",
+            rol = "admin",
+            correo = "carlitos@fitness.com",
+            estado = true,
+            peso = 70f,
+            estatura = 1.70f,
+            imc = 70f/1.70f,
+            password = "Soy123"
+        )
+        println("PersonaAdmin: $personaAdmin")
+        insertar(personaAdmin)
+    }*/
 
     // SECCION: PERFIL DEL USUARIO ACTIVO
 
@@ -329,7 +400,10 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
 
         viewModelScope.launch {
             historialDao.obtenerPorUsuario(correoUsuario).collectLatest { sesiones ->
-                val persona = personaDao.obtenerPorCorreo(correoUsuario)
+                val persona = runCatching { personaApi.obtenerPersona(correoUsuario) }
+                    .onSuccess { guardarPersonaLocal(it) }
+                    .getOrNull()
+                    ?: personaDao.obtenerPorCorreo(correoUsuario)
                 personaActual = persona ?: PersonaEntity(correo = correoUsuario)
 
                 val workouts = sesiones.count { it.completado }
@@ -350,11 +424,11 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun usuarioActual(context: Context, onclik: () -> Unit) {
-        val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
-        val usuario = preferences.getString("user", "")
-        val pass = preferences.getString("pass", "")
+        val session = SessionManager(context)
+        val usuario = session.getUser()
+        val pass = session.getPassword()
 
-        if (!usuario.isNullOrEmpty() && !pass.isNullOrEmpty()) {
+        if (usuario.isNotEmpty() && pass.isNotEmpty()) {
             obtenerPorCorreo(usuario) { persona ->
                 if (persona != null) {
                     personaActual = persona
@@ -426,7 +500,10 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         }
 
         viewModelScope.launch {
-            val personaActual = personaDao.obtenerPorCorreo(editor.correo)
+            val personaActual = runCatching { personaApi.obtenerPersona(editor.correo) }
+                .onSuccess { guardarPersonaLocal(it) }
+                .getOrNull()
+                ?: personaDao.obtenerPorCorreo(editor.correo)
             if (personaActual == null) {
                 accountEditorState = editor.copy(errorMessage = "No encontramos la cuenta actual.")
                 return@launch
@@ -440,8 +517,12 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
                 imc = peso / (estatura * estatura)
             )
 
-            personaDao.actualizar(personaActualizada)
-            this@PersonaViewModel.personaActual = personaActualizada
+            val actualizada = runCatching {
+                personaApi.actualizarPersona(editor.correo, personaActualizada)
+            }.getOrNull() ?: personaActualizada
+
+            guardarPersonaLocal(actualizada)
+            this@PersonaViewModel.personaActual = actualizada
             accountEditorState = null
             cargarPerfilUsuarioActivo()
             onSuccess()
@@ -463,7 +544,10 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         if (correoUsuario.isBlank()) return
 
         viewModelScope.launch {
-            val persona = personaDao.obtenerPorCorreo(correoUsuario) ?: return@launch
+            val persona = personaDao.obtenerPorCorreo(correoUsuario)
+                ?: runCatching { personaApi.obtenerPersona(correoUsuario) }.getOrNull()
+                ?: return@launch
+            runCatching { personaApi.eliminarPersona(correoUsuario) }
             personaDao.eliminar(persona)
             limpiarSesion(context)
             showDeleteAccountDialog = false
@@ -538,13 +622,26 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun obtenerCorreoUsuarioActivo(): String {
-        val preferences = getApplication<Application>()
-            .getSharedPreferences("credenciales", Context.MODE_PRIVATE)
-        return preferences.getString("user", "").orEmpty()
+        return sessionManager.getUser()
     }
 
     private fun limpiarSesion(context: Context) {
-        val preferences = context.getSharedPreferences("credenciales", Context.MODE_PRIVATE)
-        preferences.edit().clear().apply()
+        SessionManager(context).clearSession()
+    }
+
+    private fun sincronizarPersonas() {
+        viewModelScope.launch {
+            val personas = runCatching { personaApi.obtenerPersonas() }.getOrNull() ?: return@launch
+            reemplazarPersonasLocales(personas)
+        }
+    }
+
+    private suspend fun guardarPersonaLocal(persona: PersonaEntity) {
+        personaDao.insertar(persona)
+    }
+
+    private suspend fun reemplazarPersonasLocales(personas: List<PersonaEntity>) {
+        personaDao.eliminarTodos()
+        personas.forEach { personaDao.insertar(it) }
     }
 }

@@ -8,13 +8,16 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.qz.quantumfitzone.data.local.repository.DatabaseProvider
 import com.qz.quantumfitzone.data.model.MaquinaEntity
+import com.qz.quantumfitzone.data.remote.ApiClient
+import com.qz.quantumfitzone.data.remote.SessionManager
+import com.qz.quantumfitzone.data.remote.model.toDto
+import com.qz.quantumfitzone.data.remote.model.toEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 class MaquinaViewModel(application: Application) : AndroidViewModel(application) {
-    private val dao = DatabaseProvider
-        .getDatabase(application)
-        .maquinaDao()
+    private val dao = DatabaseProvider.getDatabase(application).maquinaDao()
+    private val api = ApiClient.createPersonaApi(SessionManager(application))
 
     val maquinas: Flow<List<MaquinaEntity>> = dao.obtenerTodas()
 
@@ -26,6 +29,10 @@ class MaquinaViewModel(application: Application) : AndroidViewModel(application)
 
     var formError by mutableStateOf<String?>(null)
         private set
+
+    init {
+        sincronizarMaquinas()
+    }
 
     fun onNombreChange(valor: String) {
         maquinaForm = maquinaForm.copy(nombre = valor)
@@ -76,11 +83,16 @@ class MaquinaViewModel(application: Application) : AndroidViewModel(application)
         )
 
         viewModelScope.launch {
-            if (isEditing) {
-                dao.actualizar(maquinaLimpia)
+            val guardada = if (isEditing) {
+                runCatching {
+                    api.actualizarMaquina(maquinaLimpia.id_maquina, maquinaLimpia.toDto()).toEntity()
+                }.getOrNull() ?: maquinaLimpia
             } else {
-                dao.insertar(maquinaLimpia)
+                runCatching {
+                    api.crearMaquina(maquinaLimpia.toDto()).toEntity()
+                }.getOrNull() ?: maquinaLimpia
             }
+            dao.insertar(guardada)
             clearForm()
             onSuccess()
         }
@@ -88,7 +100,16 @@ class MaquinaViewModel(application: Application) : AndroidViewModel(application)
 
     fun eliminar(maquina: MaquinaEntity) {
         viewModelScope.launch {
+            runCatching { api.eliminarMaquina(maquina.id_maquina) }
             dao.eliminar(maquina)
+        }
+    }
+
+    private fun sincronizarMaquinas() {
+        viewModelScope.launch {
+            val remotas = runCatching { api.obtenerMaquinas() }.getOrNull() ?: return@launch
+            dao.eliminarTodas()
+            remotas.forEach { dao.insertar(it.toEntity()) }
         }
     }
 }

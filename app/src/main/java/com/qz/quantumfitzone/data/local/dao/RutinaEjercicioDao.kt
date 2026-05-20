@@ -20,4 +20,7 @@ interface RutinaEjercicioDao {
 
     @Query("SELECT * FROM rutina_ejercicios WHERE id_rutina = :idRutina ORDER BY orden ASC")
     suspend fun obtenerPorRutinaLista(idRutina: Int): List<RutinaEjercicioEntity>
+
+    @Query("DELETE FROM rutina_ejercicios")
+    suspend fun eliminarTodos()
 }

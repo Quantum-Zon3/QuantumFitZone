@@ -11,28 +11,46 @@ import com.qz.quantumfitzone.data.local.repository.DatabaseProvider
 import com.qz.quantumfitzone.data.model.HistorialEjercicioEntity
 import com.qz.quantumfitzone.data.model.HistorialEntrenamientoEntity
 import com.qz.quantumfitzone.data.model.RutinaEntity
+import com.qz.quantumfitzone.data.remote.ApiClient
+import com.qz.quantumfitzone.data.remote.SessionManager
+import com.qz.quantumfitzone.data.remote.model.toDto
+import com.qz.quantumfitzone.data.remote.model.toEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class RoutineListViewModel(application: Application) : AndroidViewModel(application) {
+class
+RoutineListViewModel(application: Application) : AndroidViewModel(application) {
     private val database = DatabaseProvider.getDatabase(application)
     private val dao = database.rutinaDao()
     private val historialDao = database.historialEntrenamientoDao()
     private val historialEjercicioDao = database.historialEjercicioDao()
     private val rutinaEjercicioDao = database.rutinaEjercicioDao()
     private val exerciseCatalogDao = database.exerciseCatalogDao()
+    private val sessionManager = SessionManager(application)
+    private val api = ApiClient.createPersonaApi(sessionManager)
 
     val routines: Flow<List<RutinaEntity>> = dao.obtenerTodas()
 
     var playRoutineError by mutableStateOf<String?>(null)
         private set
 
+    init {
+        sincronizarRutinas()
+    }
+
     fun eliminarRutina(rutina: RutinaEntity) {
         viewModelScope.launch {
+            runCatching {
+                api.obtenerRutinaEjerciciosPorRutina(rutina.id_rutina)
+            }.getOrNull().orEmpty().forEach { assignment ->
+                runCatching { api.eliminarRutinaEjercicio(assignment.idRutinaEjercicio) }
+            }
+            runCatching { api.eliminarRutina(rutina.id_rutina) }
             dao.eliminar(rutina)
+            rutinaEjercicioDao.eliminarPorRutina(rutina.id_rutina)
         }
     }
 
@@ -69,21 +87,28 @@ class RoutineListViewModel(application: Application) : AndroidViewModel(applicat
             val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
             val startTimestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 
-            val historyId = historialDao.insertar(
-                HistorialEntrenamientoEntity(
-                    correo_usuario = correoUsuario,
-                    id_rutina = routine.id_rutina,
-                    fecha = today,
-                    fecha_inicio = startTimestamp,
-                    titulo = routine.nombre,
-                    duracion_minutos = 0,
-                    duracion_segundos = 0,
-                    kcal = 0,
-                    categoria = routine.categoria,
-                    en_progreso = true,
-                    completado = false
-                )
-            ).toInt()
+            val historyPayload = HistorialEntrenamientoEntity(
+                correo_usuario = correoUsuario,
+                id_rutina = routine.id_rutina,
+                fecha = today,
+                fecha_inicio = startTimestamp,
+                titulo = routine.nombre,
+                duracion_minutos = 0,
+                duracion_segundos = 0,
+                kcal = 0,
+                categoria = routine.categoria,
+                en_progreso = true,
+                completado = false
+            )
+
+            val savedHistory = runCatching {
+                api.crearHistorialEntrenamiento(historyPayload.toDto()).toEntity()
+            }.getOrNull() ?: historyPayload.copy(
+                id_historial = historialDao.insertar(historyPayload).toInt()
+            )
+
+            historialDao.insertar(savedHistory)
+            val historyId = savedHistory.id_historial
 
             val snapshotRows = assignments.mapNotNull { assignment ->
                 val exercise = exerciseCatalogDao.obtenerPorId(assignment.id_exercise) ?: return@mapNotNull null
@@ -106,14 +131,33 @@ class RoutineListViewModel(application: Application) : AndroidViewModel(applicat
                 return@launch
             }
 
-            historialEjercicioDao.insertarTodos(snapshotRows)
+            snapshotRows.forEach { snapshot ->
+                val savedSnapshot = runCatching {
+                    api.crearHistorialEjercicio(snapshot.toDto()).toEntity()
+                }.getOrNull() ?: snapshot
+                historialEjercicioDao.insertar(savedSnapshot)
+            }
             onStarted()
         }
     }
 
     private fun obtenerCorreoUsuarioActivo(): String {
-        val preferences = getApplication<Application>()
-            .getSharedPreferences("credenciales", Context.MODE_PRIVATE)
-        return preferences.getString("user", "").orEmpty()
+        return sessionManager.getUser()
+    }
+
+    private fun sincronizarRutinas() {
+        viewModelScope.launch {
+            val rutinasRemotas = runCatching { api.obtenerRutinas() }.getOrNull() ?: return@launch
+            rutinaEjercicioDao.eliminarTodos()
+            dao.eliminarTodas()
+            rutinasRemotas.forEach { rutinaDto ->
+                val rutina = rutinaDto.toEntity()
+                dao.insertar(rutina)
+                val assignments = runCatching {
+                    api.obtenerRutinaEjerciciosPorRutina(rutina.id_rutina)
+                }.getOrNull().orEmpty()
+                assignments.forEach { rutinaEjercicioDao.insertar(it.toEntity()) }
+            }
+        }
     }
 }

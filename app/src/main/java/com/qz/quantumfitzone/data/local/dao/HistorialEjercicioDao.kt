@@ -46,4 +46,7 @@ interface HistorialEjercicioDao {
 
     @Delete
     suspend fun eliminar(historialEjercicio: HistorialEjercicioEntity)
+
+    @Query("DELETE FROM historial_ejercicios")
+    suspend fun eliminarTodos()
 }

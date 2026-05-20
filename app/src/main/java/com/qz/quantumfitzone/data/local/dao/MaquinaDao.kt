@@ -25,4 +25,7 @@ interface MaquinaDao {
 
     @Delete
     suspend fun eliminar(maquina: MaquinaEntity)
+
+    @Query("DELETE FROM maquinas")
+    suspend fun eliminarTodas()
 }
