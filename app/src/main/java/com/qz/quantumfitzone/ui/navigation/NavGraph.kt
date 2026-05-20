@@ -218,6 +218,11 @@ fun NavGraph() {
 
         composable(Screen.DashboardAdmin.route) {
             DashboardScreenAdmin (
+                onSignOut = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
                 onNavigate =  { destination ->
                     when (destination) {
                         BottomNavDestination.HOME -> navController.navigate(Screen.DashboardAdmin.route)

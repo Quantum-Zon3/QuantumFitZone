@@ -29,6 +29,7 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
     private val personaDao = database.personaDao()
     private val historialDao = database.historialEntrenamientoDao()
     private val sessionManager = SessionManager(application)
+    private val authApi = ApiClient.createAuthApi(sessionManager)
     private val personaApi = ApiClient.createPersonaApi(sessionManager)
 
     val listaPersonas = personaDao.obtenerTodas()
@@ -292,7 +293,7 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
 
         viewModelScope.launch {
             val authResponse = runCatching {
-                personaApi.login(
+                authApi.login(
                     LoginBody(
                         correo = personaEntity.correo,
                         password = personaEntity.password
@@ -343,14 +344,13 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
         onClickDashboardUsuario: () -> Unit,
         onClickDashboardAdmin: () -> Unit
     ) {
-        val usuario = SessionManager(context).getUser()
-        val pass = SessionManager(context).getPassword()
+        val session = SessionManager(context)
+        val usuario = session.getUser()
+        val pass = session.getPassword()
 
         if (usuario.isNotEmpty() && pass.isNotEmpty()) {
             viewModelScope.launch {
-                val persona = runCatching { personaApi.obtenerPersona(usuario) }
-                    .onSuccess { guardarPersonaLocal(it) }
-                    .getOrNull()
+                val persona = obtenerPersonaConSesionGuardada(context, usuario, pass)
                     ?: personaDao.obtenerPorCorreo(usuario)
 
                 if (persona != null && persona.password == pass) {
@@ -558,10 +558,13 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun signOut(context: Context, onSignedOut: () -> Unit) {
-        limpiarSesion(context)
-        personaActual = PersonaEntity()
-        _uiState.value = UserProfileUiState(isLoading = false)
-        onSignedOut()
+        viewModelScope.launch {
+            runCatching { authApi.logout() }
+            limpiarSesion(context)
+            personaActual = PersonaEntity()
+            _uiState.value = UserProfileUiState(isLoading = false)
+            onSignedOut()
+        }
     }
 
     fun logout(context: Context, onclik: () -> Unit) {
@@ -627,6 +630,36 @@ class PersonaViewModel(application: Application) : AndroidViewModel(application)
 
     private fun limpiarSesion(context: Context) {
         SessionManager(context).clearSession()
+    }
+
+    private suspend fun obtenerPersonaConSesionGuardada(
+        context: Context,
+        usuario: String,
+        pass: String
+    ): PersonaEntity? {
+        val personaRemota = if (sessionManager.getAccessToken().isNotBlank()) {
+            runCatching { personaApi.obtenerPersona(usuario) }
+                .onSuccess { guardarPersonaLocal(it) }
+                .getOrNull()
+        } else {
+            null
+        }
+
+        if (personaRemota != null) return personaRemota
+
+        val authResponse = runCatching {
+            authApi.login(LoginBody(correo = usuario, password = pass))
+        }.getOrNull() ?: return null
+
+        guardarPersonaLocal(authResponse.persona)
+        guardarDatos(
+            context = context,
+            usuario = authResponse.persona.correo,
+            pass = pass,
+            accessToken = authResponse.accessToken,
+            refreshToken = authResponse.refreshToken
+        )
+        return authResponse.persona
     }
 
     private fun sincronizarPersonas() {

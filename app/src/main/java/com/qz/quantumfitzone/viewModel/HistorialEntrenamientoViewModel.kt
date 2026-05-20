@@ -1,7 +1,6 @@
 package com.qz.quantumfitzone.viewModel
 
 import android.app.Application
-import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.qz.quantumfitzone.data.local.repository.DatabaseProvider
@@ -31,7 +30,8 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
     private val historialDao = database.historialEntrenamientoDao()
     private val historialEjercicioDao = database.historialEjercicioDao()
     private val sessionManager = SessionManager(application)
-    private val api = ApiClient.createPersonaApi(sessionManager)
+    private val historialEntrenamientoApi = ApiClient.createHistorialEntrenamientoApi(sessionManager)
+    private val historialEjercicioApi = ApiClient.createHistorialEjercicioApi(sessionManager)
 
     private val _uiState = MutableStateFlow(WorkoutHistoryUiState())
     val uiState: StateFlow<WorkoutHistoryUiState> = _uiState.asStateFlow()
@@ -84,16 +84,16 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
     fun insertarSesion(historial: HistorialEntrenamientoEntity) {
         viewModelScope.launch {
             val guardado = runCatching {
-                api.crearHistorialEntrenamiento(historial.toDto()).toEntity()
+                historialEntrenamientoApi.crearHistorialEntrenamiento(historial.toDto()).toEntity()
             }.getOrNull() ?: historial
-            historialDao.insertar(guardado)
+            guardarHistorialLocal(guardado)
         }
     }
 
     fun actualizarSesion(historial: HistorialEntrenamientoEntity) {
         viewModelScope.launch {
             val actualizada = runCatching {
-                api.actualizarHistorialEntrenamiento(historial.id_historial, historial.toDto()).toEntity()
+                historialEntrenamientoApi.actualizarHistorialEntrenamiento(historial.id_historial, historial.toDto()).toEntity()
             }.getOrNull() ?: historial
             historialDao.actualizar(actualizada)
         }
@@ -101,7 +101,7 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
 
     fun eliminarSesion(historial: HistorialEntrenamientoEntity) {
         viewModelScope.launch {
-            runCatching { api.eliminarHistorialEntrenamiento(historial.id_historial) }
+            runCatching { historialEntrenamientoApi.eliminarHistorialEntrenamiento(historial.id_historial) }
             historialDao.eliminar(historial)
         }
     }
@@ -202,7 +202,7 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
                 completado = true
             )
             runCatching {
-                api.actualizarHistorialEntrenamiento(actualizado.id_historial, actualizado.toDto())
+                historialEntrenamientoApi.actualizarHistorialEntrenamiento(actualizado.id_historial, actualizado.toDto())
             }
             historialDao.actualizar(actualizado)
         }
@@ -321,7 +321,7 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
                 completado = markAsCompleted ?: item.completado
             )
             runCatching {
-                api.actualizarHistorialEjercicio(actualizado.id_historial_ejercicio, actualizado.toDto())
+                historialEjercicioApi.actualizarHistorialEjercicio(actualizado.id_historial_ejercicio, actualizado.toDto())
             }
             historialEjercicioDao.actualizar(actualizado)
         }
@@ -375,20 +375,36 @@ class HistorialEntrenamientoViewModel(application: Application) : AndroidViewMod
 
         viewModelScope.launch {
             val sesiones = runCatching {
-                api.obtenerHistorialEntrenamientosPorUsuario(correoUsuario)
+                historialEntrenamientoApi.obtenerHistorialEntrenamientosPorUsuario(correoUsuario)
             }.getOrNull() ?: return@launch
 
             historialEjercicioDao.eliminarTodos()
             historialDao.eliminarTodos()
 
             sesiones.forEach { sessionDto ->
-                val session = sessionDto.toEntity()
-                historialDao.insertar(session)
+                val session = guardarHistorialLocal(sessionDto.toEntity())
                 val ejercicios = runCatching {
-                    api.obtenerHistorialEjerciciosPorHistorial(session.id_historial)
+                    historialEjercicioApi.obtenerHistorialEjerciciosPorHistorial(session.id_historial)
                 }.getOrNull().orEmpty()
-                ejercicios.forEach { historialEjercicioDao.insertar(it.toEntity()) }
+                ejercicios.forEach { ejercicioDto ->
+                    val ejercicio = ejercicioDto.toEntity().copy(
+                        id_historial = session.id_historial
+                    )
+                    historialEjercicioDao.insertar(ejercicio)
+                }
             }
         }
+    }
+
+    private suspend fun guardarHistorialLocal(
+        historial: HistorialEntrenamientoEntity
+    ): HistorialEntrenamientoEntity {
+        if (historial.id_historial > 0) {
+            historialDao.insertar(historial)
+            return historial
+        }
+
+        val localId = historialDao.insertar(historial.copy(id_historial = 0)).toInt()
+        return historial.copy(id_historial = localId)
     }
 }

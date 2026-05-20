@@ -1,6 +1,7 @@
 package com.qz.quantumfitzone.data.remote.model
 
 import com.qz.quantumfitzone.data.model.ExerciseCatalogEntity
+import com.qz.quantumfitzone.data.model.EjercicioEntity
 import com.qz.quantumfitzone.data.model.HistorialEjercicioEntity
 import com.qz.quantumfitzone.data.model.HistorialEntrenamientoEntity
 import com.qz.quantumfitzone.data.model.MaquinaEntity
@@ -41,6 +42,30 @@ fun ExerciseCatalogEntity.toDto(): ExerciseCatalogDto = ExerciseCatalogDto(
     idMaquina = id_maquina,
     series = series,
     repeticiones = repeticiones
+)
+
+fun EjercicioDto.toEntity(): EjercicioEntity = EjercicioEntity(
+    id_ejercicio = idEjercicio,
+    id_rutina = idRutina,
+    id_maquina = idMaquina,
+    peso = series?.lastOrNull { it.completada == true }?.peso ?: series?.lastOrNull()?.peso,
+    repeticiones = series?.lastOrNull { it.completada == true }?.repeticiones
+        ?: series?.lastOrNull()?.repeticiones,
+    series = series?.size,
+    objetivo_peso = objetivoPeso,
+    objetivo_repeticiones = objetivoRepeticiones,
+    objetivo_series = objetivoSeries,
+    fecha = fecha
+)
+
+fun EjercicioEntity.toDto(): EjercicioDto = EjercicioDto(
+    idEjercicio = id_ejercicio,
+    idRutina = id_rutina,
+    idMaquina = id_maquina,
+    objetivoPeso = objetivo_peso,
+    objetivoRepeticiones = objetivo_repeticiones,
+    objetivoSeries = objetivo_series,
+    fecha = fecha
 )
 
 fun RutinaDto.toEntity(): RutinaEntity = RutinaEntity(

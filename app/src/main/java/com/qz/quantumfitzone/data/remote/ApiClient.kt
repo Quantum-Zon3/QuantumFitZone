@@ -7,9 +7,42 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    private const val BASE_URL = "http://10.255.250.162:8080/"
+    private const val BASE_URL = "http://192.168.100.15:8080/"
 
-    fun createPersonaApi(sessionManager: SessionManager): PersonaApiService {
+    fun createAuthApi(sessionManager: SessionManager): AuthApiService =
+        createService(sessionManager, AuthApiService::class.java)
+
+    fun createPersonaApi(sessionManager: SessionManager): PersonaApiService =
+        createService(sessionManager, PersonaApiService::class.java)
+
+    fun createMaquinaApi(sessionManager: SessionManager): MaquinaApiService =
+        createService(sessionManager, MaquinaApiService::class.java)
+
+    fun createExerciseCatalogApi(sessionManager: SessionManager): ExerciseCatalogApiService =
+        createService(sessionManager, ExerciseCatalogApiService::class.java)
+
+    fun createEjercicioApi(sessionManager: SessionManager): EjercicioApiService =
+        createService(sessionManager, EjercicioApiService::class.java)
+
+    fun createSerieApi(sessionManager: SessionManager): SerieApiService =
+        createService(sessionManager, SerieApiService::class.java)
+
+    fun createRutinaApi(sessionManager: SessionManager): RutinaApiService =
+        createService(sessionManager, RutinaApiService::class.java)
+
+    fun createRutinaEjercicioApi(sessionManager: SessionManager): RutinaEjercicioApiService =
+        createService(sessionManager, RutinaEjercicioApiService::class.java)
+
+    fun createHistorialEntrenamientoApi(sessionManager: SessionManager): HistorialEntrenamientoApiService =
+        createService(sessionManager, HistorialEntrenamientoApiService::class.java)
+
+    fun createHistorialEjercicioApi(sessionManager: SessionManager): HistorialEjercicioApiService =
+        createService(sessionManager, HistorialEjercicioApiService::class.java)
+
+    private fun <T> createService(
+        sessionManager: SessionManager,
+        serviceClass: Class<T>
+    ): T {
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
@@ -27,6 +60,6 @@ object ApiClient {
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(PersonaApiService::class.java)
+            .create(serviceClass)
     }
 }

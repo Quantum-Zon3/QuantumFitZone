@@ -17,6 +17,7 @@ import com.qz.quantumfitzone.data.remote.ApiClient
 import com.qz.quantumfitzone.data.remote.SessionManager
 import com.qz.quantumfitzone.data.remote.model.toDto
 import com.qz.quantumfitzone.data.remote.model.toEntity
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
@@ -38,7 +39,11 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
     private val routineExerciseDao = database.rutinaEjercicioDao()
     private val exerciseCatalogDao = database.exerciseCatalogDao()
     private val machineDao = database.maquinaDao()
-    private val api = ApiClient.createPersonaApi(SessionManager(application))
+    private val sessionManager = SessionManager(application)
+    private val maquinaApi = ApiClient.createMaquinaApi(sessionManager)
+    private val exerciseCatalogApi = ApiClient.createExerciseCatalogApi(sessionManager)
+    private val rutinaApi = ApiClient.createRutinaApi(sessionManager)
+    private val rutinaEjercicioApi = ApiClient.createRutinaEjercicioApi(sessionManager)
 
     val exerciseCatalog: Flow<List<ExerciseCatalogEntity>> = exerciseCatalogDao.obtenerTodos()
     val machines: Flow<List<MaquinaEntity>> = machineDao.obtenerTodas()
@@ -59,6 +64,9 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
         private set
 
     var currentRoutineId by mutableStateOf<Int?>(null)
+        private set
+
+    var isSavingRoutine by mutableStateOf(false)
         private set
 
     var exerciseForm by mutableStateOf(ExerciseCatalogEntity(nombre = ""))
@@ -191,11 +199,11 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
         viewModelScope.launch {
             val saved = if (isEditingExercise) {
                 runCatching {
-                    api.actualizarExerciseCatalog(cleanExercise.id_exercise, cleanExercise.toDto()).toEntity()
+                    exerciseCatalogApi.actualizarExerciseCatalog(cleanExercise.id_exercise, cleanExercise.toDto()).toEntity()
                 }.getOrNull() ?: cleanExercise
             } else {
                 runCatching {
-                    api.crearExerciseCatalog(cleanExercise.toDto()).toEntity()
+                    exerciseCatalogApi.crearExerciseCatalog(cleanExercise.toDto()).toEntity()
                 }.getOrNull() ?: cleanExercise.copy(
                     id_exercise = exerciseCatalogDao.insertar(cleanExercise).toInt()
                 )
@@ -229,7 +237,7 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
 
     fun deleteExerciseCatalog(exercise: ExerciseCatalogEntity) {
         viewModelScope.launch {
-            runCatching { api.eliminarExerciseCatalog(exercise.id_exercise) }
+            runCatching { exerciseCatalogApi.eliminarExerciseCatalog(exercise.id_exercise) }
             exerciseCatalogDao.eliminar(exercise)
             removeExerciseFromRoutine(exercise.id_exercise)
             saveMessage = "Ejercicio eliminado del catalogo."
@@ -237,6 +245,8 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
     }
 
     fun saveRoutine(onSuccess: () -> Unit) {
+        if (isSavingRoutine) return
+
         val cleanName = routineName.trim()
         if (cleanName.isBlank()) {
             routineError = "El nombre de la rutina es obligatorio."
@@ -248,66 +258,85 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
         }
 
         viewModelScope.launch {
-            val isEditingRoutine = currentRoutineId != null
-            val routinePayload = RutinaEntity(
-                id_rutina = currentRoutineId ?: 0,
-                nombre = cleanName,
-                categoria = selectedCategory,
-                descanso_segundos = restTimeSeconds.toInt()
-            )
+            isSavingRoutine = true
+            try {
+                if (!garantizarEjerciciosSeleccionadosLocales()) return@launch
 
-            val savedRoutine = if (currentRoutineId == null) {
-                runCatching {
-                    api.crearRutina(routinePayload.toDto()).toEntity()
-                }.getOrNull() ?: routinePayload.copy(
-                    id_rutina = routineDao.insertar(routinePayload).toInt()
+                val isEditingRoutine = currentRoutineId != null
+                val routinePayload = RutinaEntity(
+                    id_rutina = currentRoutineId ?: 0,
+                    nombre = cleanName,
+                    categoria = selectedCategory,
+                    descanso_segundos = restTimeSeconds.toInt()
                 )
-            } else {
-                runCatching {
-                    api.actualizarRutina(routinePayload.id_rutina, routinePayload.toDto()).toEntity()
-                }.getOrNull() ?: routinePayload
-            }
-            routineDao.insertar(savedRoutine)
-            val routineId = savedRoutine.id_rutina
 
-            if (isEditingRoutine) {
-                val remoteAssignments = runCatching {
-                    api.obtenerRutinaEjerciciosPorRutina(routineId)
-                }.getOrNull().orEmpty()
-                remoteAssignments.forEach { assignment ->
-                    runCatching { api.eliminarRutinaEjercicio(assignment.idRutinaEjercicio) }
+                val remoteRoutine = if (currentRoutineId == null) {
+                    runCatching {
+                        rutinaApi.crearRutina(routinePayload.toDto()).toEntity()
+                    }.getOrNull()
+                } else {
+                    runCatching {
+                        rutinaApi.actualizarRutina(routinePayload.id_rutina, routinePayload.toDto()).toEntity()
+                    }.getOrNull()
                 }
-            }
 
-            routineExerciseDao.eliminarPorRutina(routineId)
+                val savedRoutine = guardarRutinaLocal(remoteRoutine ?: routinePayload)
+                val routineId = savedRoutine.id_rutina
+                if (routineId <= 0) {
+                    routineError = "No fue posible obtener un ID valido para la rutina."
+                    return@launch
+                }
 
-            selectedExercises.forEachIndexed { index, exercise ->
-                val assignment = RutinaEjercicioEntity(
-                    id_rutina = routineId,
-                    id_exercise = exercise.exerciseId,
-                    orden = index,
-                    peso_actual = exercise.pesoActual.toDoubleOrNull(),
-                    peso_objetivo = exercise.pesoObjetivo.toDoubleOrNull()
-                )
+                if (isEditingRoutine) {
+                    val remoteAssignments = runCatching {
+                        rutinaEjercicioApi.obtenerRutinaEjerciciosPorRutina(routineId)
+                    }.getOrNull().orEmpty()
+                    remoteAssignments.forEach { assignment ->
+                        runCatching { rutinaEjercicioApi.eliminarRutinaEjercicio(assignment.idRutinaEjercicio) }
+                    }
+                }
 
-                val savedAssignment = runCatching {
-                    api.crearRutinaEjercicio(assignment.toDto()).toEntity()
-                }.getOrNull() ?: assignment
+                routineExerciseDao.eliminarPorRutina(routineId)
 
-                routineExerciseDao.insertar(
-                    savedAssignment.copy(
+                selectedExercises.forEachIndexed { index, exercise ->
+                    val assignment = RutinaEjercicioEntity(
                         id_rutina = routineId,
+                        id_exercise = exercise.exerciseId,
+                        orden = index,
+                        peso_actual = exercise.pesoActual.toDoubleOrNull(),
+                        peso_objetivo = exercise.pesoObjetivo.toDoubleOrNull()
                     )
-                )
-            }
 
-            clearRoutine()
-            saveMessage = if (isEditingRoutine) {
-                "Rutina actualizada correctamente."
-            } else {
-                "Rutina guardada correctamente."
+                    val remoteAssignment = runCatching {
+                        rutinaEjercicioApi.crearRutinaEjercicio(assignment.toDto()).toEntity()
+                    }.getOrNull()
+
+                    routineExerciseDao.insertar(
+                        assignment.copy(
+                            id_rutina_ejercicio = remoteAssignment
+                                ?.id_rutina_ejercicio
+                                ?.takeIf { it > 0 }
+                                ?: 0,
+                            id_rutina = routineId,
+                            id_exercise = exercise.exerciseId
+                        )
+                    )
+                }
+
+                clearRoutine()
+                saveMessage = if (isEditingRoutine) {
+                    "Rutina actualizada correctamente."
+                } else {
+                    "Rutina guardada correctamente."
+                }
+                onSuccess()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                routineError = error.message ?: "No fue posible guardar la rutina."
+            } finally {
+                isSavingRoutine = false
             }
-            onSuccess()
         }
     }
 
@@ -358,19 +387,19 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
 
     private fun sincronizarCatalogos() {
         viewModelScope.launch {
-            val maquinasRemotas = runCatching { api.obtenerMaquinas() }.getOrNull()
+            val maquinasRemotas = runCatching { maquinaApi.obtenerMaquinas() }.getOrNull()
             if (maquinasRemotas != null) {
                 machineDao.eliminarTodas()
                 maquinasRemotas.forEach { machineDao.insertar(it.toEntity()) }
             }
 
-            val ejerciciosRemotos = runCatching { api.obtenerExerciseCatalog() }.getOrNull()
+            val ejerciciosRemotos = runCatching { exerciseCatalogApi.obtenerExerciseCatalog() }.getOrNull()
             if (ejerciciosRemotos != null) {
                 exerciseCatalogDao.eliminarTodos()
                 ejerciciosRemotos.forEach { exerciseCatalogDao.insertar(it.toEntity()) }
             }
 
-            val rutinasRemotas = runCatching { api.obtenerRutinas() }.getOrNull()
+            val rutinasRemotas = runCatching { rutinaApi.obtenerRutinas() }.getOrNull()
             if (rutinasRemotas != null) {
                 routineExerciseDao.eliminarTodos()
                 routineDao.eliminarTodas()
@@ -378,12 +407,41 @@ class RoutineEditorViewModel(application: Application) : AndroidViewModel(applic
                     val rutina = routineDto.toEntity()
                     routineDao.insertar(rutina)
                     val assignments = runCatching {
-                        api.obtenerRutinaEjerciciosPorRutina(rutina.id_rutina)
+                        rutinaEjercicioApi.obtenerRutinaEjerciciosPorRutina(rutina.id_rutina)
                     }.getOrNull().orEmpty()
                     assignments.forEach { routineExerciseDao.insertar(it.toEntity()) }
                 }
             }
         }
+    }
+
+    private suspend fun guardarRutinaLocal(rutina: RutinaEntity): RutinaEntity {
+        if (rutina.id_rutina > 0) {
+            routineDao.insertar(rutina)
+            return rutina
+        }
+
+        val localId = routineDao.insertar(rutina.copy(id_rutina = 0)).toInt()
+        return rutina.copy(id_rutina = localId)
+    }
+
+    private suspend fun garantizarEjerciciosSeleccionadosLocales(): Boolean {
+        selectedExercises.forEach { selected ->
+            if (exerciseCatalogDao.obtenerPorId(selected.exerciseId) != null) return@forEach
+
+            val remoteExercise = runCatching {
+                exerciseCatalogApi.obtenerExerciseCatalogPorId(selected.exerciseId).toEntity()
+            }.getOrNull()
+
+            if (remoteExercise == null) {
+                routineError = "El ejercicio \"${selected.nombre}\" no existe en el catalogo local."
+                return false
+            }
+
+            exerciseCatalogDao.insertar(remoteExercise)
+        }
+
+        return true
     }
 }
 

@@ -24,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -38,7 +39,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -161,6 +161,14 @@ fun AdminMachinesScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             SummaryRow(total = maquinas.size, visibles = maquinasFiltradas.size)
+
+            viewModel.operationError?.let { error ->
+                Spacer(modifier = Modifier.height(12.dp))
+                OperationErrorBanner(
+                    message = error,
+                    onDismiss = viewModel::clearOperationError
+                )
+            }
 
             Spacer(modifier = Modifier.height(14.dp))
 
@@ -339,6 +347,41 @@ private fun SummaryRow(total: Int, visibles: Int) {
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold
         )
+    }
+}
+
+@Composable
+private fun OperationErrorBanner(
+    message: String,
+    onDismiss: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(AdminDangerSoft)
+            .border(1.dp, AdminDanger.copy(alpha = 0.4f), RoundedCornerShape(18.dp))
+            .padding(start = 14.dp, top = 10.dp, bottom = 10.dp, end = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = message,
+            color = AdminDanger,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(
+            onClick = onDismiss,
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Cerrar",
+                tint = AdminDanger,
+                modifier = Modifier.size(16.dp)
+            )
+        }
     }
 }
 
@@ -659,12 +702,21 @@ private fun MachineFormDialog(
                         onSaveSuccess()
                     }
                 },
+                enabled = !viewModel.isSaving,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = AdminCyan,
                     contentColor = AdminBgDeep
                 )
             ) {
-                Text(if (viewModel.isEditing) "Guardar cambios" else "Crear maquina")
+                Text(
+                    if (viewModel.isSaving) {
+                        "Guardando..."
+                    } else if (viewModel.isEditing) {
+                        "Guardar cambios"
+                    } else {
+                        "Crear maquina"
+                    }
+                )
             }
         },
         dismissButton = {
